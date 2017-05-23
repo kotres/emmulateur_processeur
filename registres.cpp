@@ -1,9 +1,5 @@
 #include "registres.hpp"
 
-unsigned short int& Registres::registre(unsigned int i){
-	return data.at(i);
-}
-
-unsigned short int Registres::registre(unsigned int i) const{
+unsigned short int& Registres::operator()(unsigned int i){
 	return data.at(i);
 }
