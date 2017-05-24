@@ -4,8 +4,25 @@
 #define RETI 0x8200
 
 Processeur::Processeur()
-:alu(),registres(),programm_counter(0),code_fetched(0),Ra(0),Rb(0)
-{}
+:alu(),registres(),programm_counter(0),code_fetched(0),listeInstructions({Instruction(ALUoperation,0x0100,0x0fff)}),
+instruction(nop),Ra(0),Rb(0)
+{
+	listeInstructions.push_back(Instruction(jump_conditional,0x1000,0x17ff));
+	listeInstructions.push_back(Instruction(jump_relative,0x1800,0x1fff));
+	listeInstructions.push_back(Instruction(load_reg_imm,0x2000,0x27ff));
+	listeInstructions.push_back(Instruction(load_store_in,0x4000,0x5fff));
+	listeInstructions.push_back(Instruction(Load_store_offset,0x6000,0x7fff));
+	listeInstructions.push_back(Instruction(software_interrupt,0x8000,0x80ff));
+	listeInstructions.push_back(Instruction(push_pop,0x8100,0x81ff));
+	listeInstructions.push_back(Instruction(reti,0x8200,0x8200));
+	listeInstructions.push_back(Instruction(sleep,0x8201,0x8201));
+	listeInstructions.push_back(Instruction(load_PC_to_reg,0x8300,0x83ff));
+	listeInstructions.push_back(Instruction(jump_indirect,0x8400,0x84ff));
+	listeInstructions.push_back(Instruction(djnz,0x9000,0x9fff));
+	listeInstructions.push_back(Instruction(asmc_im_Reg,0xa000,0xbfff));
+	listeInstructions.push_back(Instruction(asmc_B_reg,0xc000,0xffff));
+
+}
 
 void Processeur::fetch(Programme prog){
 	code_fetched=prog.get(programm_counter);
@@ -13,88 +30,13 @@ void Processeur::fetch(Programme prog){
 }
 
 void Processeur::decode(){
-	if((code_fetched>>14)<2){
-		if((code_fetched>>11)<4){
-			if((code_fetched>>12)==0){
-				if(code_fetched!=0){
-					//alu_operation();
-					std::cout<<"alu operation"<<std::endl;
-				}
-				else
-				std::cout<<"nop"<<std::endl;
-			}
-			if((code_fetched>>11)==2){
-				//conditional jump
-				std::cout<<"conditional jump"<<std::endl;
-			}
-			if((code_fetched>>11)==3){
-				//relative jump
-				//programm_counter+=(short int)(code_fetched&0x07ff);
-				std::cout<<"relative jump"<<std::endl;
-			}
-
+	instruction=nop;
+	for(auto inst:listeInstructions){
+		if(inst.valIn(code_fetched)){
+			instruction=inst.Nom();
+			std::cout<<instruction<<std::endl;
 		}
-		else{
-			if((code_fetched>>13)==1){
-				//load reg to imm
-				std::cout<<"load reg to im"<<std::endl;
-			}
-			if((code_fetched>>13)==2){
-				//load/store indirect
-				std::cout<<"load store indirect"<<std::endl;
-			}
-			if((code_fetched>>13)==3){
-				//load/store with offset
-				std::cout<<"load/store with offset"<<std::endl;
-			}
-		}
-
 	}
-	else{
-		if(code_fetched<=RETI+3){
-			if(code_fetched<RETI){
-				if((code_fetched>>8)==0x80){
-					//software interrupt
-					std::cout<<"software interrupt"<<std::endl;
-				}
-				else{
-					//push pop
-					std::cout<<"push pop"<<std::endl;
-				}
-			}
-			else{
-				if(code_fetched==RETI){
-					std::cout<<"return from interrupt"<<std::endl;
-				}
-				else{
-					std::cout<<"push pop PC"<<std::endl;
-				}
-			}
-		}
-		else{
-			if((code_fetched>>12)<9){
-				if((code_fetched>>8)==0x83){
-					std::cout<<"load PC to reg"<<std::endl;
-				}
-				else{
-					std::cout<<"jump indirect"<<std::endl;
-				}
-			}
-			else{
-				if((code_fetched>>12)==9){
-					std::cout<<"decrease jump not zero"<<std::endl;
-				}
-				if((code_fetched>>13)==5){
-					std::cout<<"add/sub/mov/comp imto reg"<<std::endl;
-				}
-				if((code_fetched>>14)==3){
-					std::cout<<"add/sub/mov/comp byte to reg"<<std::endl;
-				}
-			}
-		}
-		
-	}
-
 }
 
 void Processeur::execute(){
@@ -113,7 +55,7 @@ void Processeur::alu_operation(){
 	alu.inputA()=registres(Ra);
 	alu.inputA()=registres(Rb);
 	alu.opcode()=opcode;
-	//std::cout<<(unsigned int)opcode<<" "<<(unsigned int)Ra<<" "<<(unsigned int)Rb<<std::endl;
+	std::cout<<(unsigned int)opcode<<" "<<(unsigned int)Ra<<" "<<(unsigned int)Rb<<std::endl;
 }
 
 unsigned short int Processeur::codeFetched(){
