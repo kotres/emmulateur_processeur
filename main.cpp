@@ -8,7 +8,7 @@ int main(){
 	for(unsigned int i=0;i<prog.taille();i++){
 		proc.fetch(prog);
 		proc.decode();
-		proc.execute();
+		proc.execute(prog);
 	}
 	return 0; 
 }

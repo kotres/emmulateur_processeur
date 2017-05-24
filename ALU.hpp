@@ -4,15 +4,15 @@
 
 class ALU{
 private:
-	unsigned short int minputA,minputB,mresultat;
+	unsigned short int minputS,minputD,mresultat;
 	unsigned char mcondition_reg;
 	unsigned char mopcode;
 public:
 	void update_state();
-	unsigned short int& inputA();
-	unsigned short int inputA() const;
-	unsigned short int& inputB();
-	unsigned short int inputB() const;
+	unsigned short int& inputS();
+	unsigned short int inputS() const;
+	unsigned short int& inputD();
+	unsigned short int inputD() const;
 	unsigned char& opcode();
 	unsigned char opcode() const;
 	unsigned short int resultat() const;

@@ -20,7 +20,7 @@ enum nomInstruction
 	jump_indirect,
 	djnz,
 	asmc_im_Reg,
-	asmc_B_reg,
+	asmc_off_reg,
 };
 
 class Instruction

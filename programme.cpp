@@ -27,7 +27,7 @@ unsigned short int Programme::get(unsigned int i){
 }
 
 void Programme::put(unsigned int i,unsigned short int data){
-	if(i>=code.size())
+	if(i>=code.size()&&i<0x1ffff)
 		code.resize(i+1,0);
 	code.at(i)=data;
 }

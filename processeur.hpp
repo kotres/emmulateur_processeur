@@ -18,12 +18,14 @@ private:
 	unsigned short int code_fetched;
 	std::list<Instruction>listeInstructions;
 	nomInstruction instruction;
-	unsigned char Ra,Rb;
 	void alu_operation();
+	void JumpRelative();
+	void loadRegImm();
+	void loadStoreIn(Programme prog);
 public:
 	void fetch(Programme prog);
 	void decode();
-	void execute();
+	void execute(Programme prog);
 	Processeur();
 	unsigned short int codeFetched();
 };

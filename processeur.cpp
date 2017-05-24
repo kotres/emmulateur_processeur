@@ -5,7 +5,7 @@
 
 Processeur::Processeur()
 :alu(),registres(),programm_counter(0),code_fetched(0),listeInstructions({Instruction(ALUoperation,0x0100,0x0fff)}),
-instruction(nop),Ra(0),Rb(0)
+instruction(nop)
 {
 	listeInstructions.push_back(Instruction(jump_conditional,0x1000,0x17ff));
 	listeInstructions.push_back(Instruction(jump_relative,0x1800,0x1fff));
@@ -20,13 +20,12 @@ instruction(nop),Ra(0),Rb(0)
 	listeInstructions.push_back(Instruction(jump_indirect,0x8400,0x84ff));
 	listeInstructions.push_back(Instruction(djnz,0x9000,0x9fff));
 	listeInstructions.push_back(Instruction(asmc_im_Reg,0xa000,0xbfff));
-	listeInstructions.push_back(Instruction(asmc_B_reg,0xc000,0xffff));
+	listeInstructions.push_back(Instruction(asmc_off_reg,0xc000,0xffff));
 
 }
 
 void Processeur::fetch(Programme prog){
 	code_fetched=prog.get(programm_counter);
-	programm_counter++;
 }
 
 void Processeur::decode(){
@@ -34,30 +33,121 @@ void Processeur::decode(){
 	for(auto inst:listeInstructions){
 		if(inst.valIn(code_fetched)){
 			instruction=inst.Nom();
-			std::cout<<instruction<<std::endl;
+			//std::cout<<instruction<<std::endl;
 		}
 	}
 }
 
-void Processeur::execute(){
-	if((code_fetched&0xf000)==0){
-		alu.update_state();
-		registres(Ra)=alu.resultat();
-		//std::cout<<(int)alu.opcode()<<" "<<alu.resultat()<<std::endl;
+void Processeur::execute(Programme prog){
+	std::cout<<"PC: "<<std::hex<<programm_counter<<", code fetched: "<<std::hex<<code_fetched<<":"<<std::endl;
+	switch(instruction){
+		case nop:
+		break;
+		case ALUoperation:
+			alu_operation();
+		break;
+		case jump_conditional:
+		break;
+		case jump_relative:
+			JumpRelative();
+		break;
+		case load_reg_imm:
+			loadRegImm();
+		break;
+		case load_store_in:
+			loadStoreIn(prog);
+		break;
+		case Load_store_offset:
+		break;
+		case software_interrupt:
+		break;
+		case push_pop:
+		break;
+		case reti:
+		break;
+		case sleep:
+		break;
+		case load_PC_to_reg:
+		break;
+		case jump_indirect: 
+		break;
+		case djnz:
+		break;
+		case asmc_im_Reg:
+		break;
+		case asmc_off_reg:
+		break;
+		default:
+		break;
 	}
+	if(instruction!=jump_relative)
+		programm_counter++;
 }
 
 void Processeur::alu_operation(){
+	unsigned char Rs,Rd;
 	unsigned char opcode=0;
 	opcode = (code_fetched>> 8)&0x0f;
-	Ra =  (code_fetched>> 4)&0x0f;
-	Rb = (code_fetched)&0x0f;
-	alu.inputA()=registres(Ra);
-	alu.inputA()=registres(Rb);
+	Rs =  (code_fetched&0x00f0)>>4;
+	Rd = code_fetched&0x000f;
+	alu.inputS()=registres(Rs);
+	std::cout<<"alu operation, Rs:"<<(int)Rs<<":"<<std::hex<<registres(Rs);
+	alu.inputD()=registres(Rd);
+	std::cout<<" Rd:"<<(int)Rd<<":"<<std::hex<<registres(Rd)<<std::endl;
 	alu.opcode()=opcode;
-	std::cout<<(unsigned int)opcode<<" "<<(unsigned int)Ra<<" "<<(unsigned int)Rb<<std::endl;
+	alu.update_state();
+	registres(Rd)=alu.resultat();
+	std::cout<<" resultat: "<<std::hex<<alu.resultat()<<std::endl;
+}
+
+void Processeur::JumpRelative(){
+	short int off;
+	if((code_fetched&0x0400)==0)
+		off=code_fetched&(~0x1800);
+	else
+		off=code_fetched|0xf800;
+	programm_counter+=off;
+	std::cout<<"relative jump, off: "<<off<<" pc: "<<programm_counter<<std::endl;
 }
 
 unsigned short int Processeur::codeFetched(){
 	return code_fetched;
+}
+
+void Processeur::loadRegImm(){
+	unsigned char Rn,im;
+	Rn=code_fetched&0x0f;
+	im=code_fetched>>4;
+	std::cout<<"load reg imm Rn: "<<(int)Rn<<":"<<std::hex<<registres(Rn)<<" im: "<<(int)im<<":"<<std::hex<<registres(im)<<std::endl;
+	registres(im)=registres(Rn);
+	std::cout<<"resultat: Rn: "<<std::hex<<registres(Rn)<<" im: "<<std::hex<<registres(im)<<std::endl;
+}
+
+void Processeur::loadStoreIn(Programme prog){
+	unsigned char Rh,Rl,Rn;
+	bool ls;
+	short unsigned int valL,valH;
+	unsigned int indirect;
+	Rh=(code_fetched&0xf00)>>8;
+	Rl=(code_fetched&0xf0)>>4;
+	Rn=code_fetched&0x0f;
+	ls=code_fetched&0x1000;
+	valL=registres(Rl);
+	valH=registres(Rh);
+	indirect=valL+(valH<<16);
+	if(ls){
+		registres(Rn)=prog.get(indirect);
+		std::cout<<"load indirect to Rn, Rn: "<<(int)Rn<<"Rh: "<<(int)Rh<<":"<<std::hex
+		<<valH<<"Rl: "<<(int)Rl<<":"<<std::hex<<valL<<std::endl;
+		std::cout<<"indirect: "<<indirect<<":"<<std::hex<<prog.get(indirect)<<std::endl;
+		std::cout<<"result: Rn:"<<(int)Rn<<":"<<std::hex<<registres(Rn)<<std::endl;
+	}
+	else
+	{
+		prog.put(indirect,registres(Rn));
+		registres(Rn)=prog.get(indirect);
+		std::cout<<"load Rn to indirect, Rn: "<<(int)Rn<<"Rh: "<<(int)Rh<<":"<<std::hex
+		<<valH<<"Rl: "<<(int)Rl<<":"<<std::hex<<valL<<std::endl;
+		std::cout<<"result: indirect: "<<indirect<<":"<<std::hex<<prog.get(indirect)<<std::endl;
+	}
 }
