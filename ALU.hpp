@@ -1,22 +1,23 @@
 #pragma once
 #ifndef ALU_HPP
 #define ALU_HPP
+#include <cstdint>
 
 class ALU{
 private:
-	unsigned short int minputS,minputD,mresultat;
-	unsigned char mcondition_reg;
-	unsigned char mopcode;
+	uint16_t minputS,minputD,mresultat;
+	uint8_t mcondition_reg;
+	uint8_t mopcode;
 public:
 	void update_state();
-	unsigned short int& inputS();
-	unsigned short int inputS() const;
-	unsigned short int& inputD();
-	unsigned short int inputD() const;
-	unsigned char& opcode();
-	unsigned char opcode() const;
-	unsigned short int resultat() const;
-	unsigned char condition_reg() const;
+	uint16_t& inputS();
+	uint16_t inputS() const;
+	uint16_t& inputD();
+	uint16_t inputD() const;
+	uint8_t& opcode();
+	uint8_t opcode() const;
+	uint16_t resultat() const;
+	uint8_t condition_reg() const;
 };
 
 #endif

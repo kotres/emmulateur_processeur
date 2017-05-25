@@ -1,6 +1,7 @@
 #include "processeur.hpp"
 #include <iostream>
 
+
 #define RETI 0x8200
 
 Processeur::Processeur()
@@ -70,6 +71,7 @@ void Processeur::execute(Programme& prog){
 		case sleep:
 		break;
 		case load_PC_to_reg:
+			loadPCtoReg();
 		break;
 		case jump_indirect: 
 		break;
@@ -88,8 +90,8 @@ void Processeur::execute(Programme& prog){
 }
 
 void Processeur::aluOperation(){
-	unsigned char Rs,Rd;
-	unsigned char opcode=0;
+	uint8_t Rs,Rd;
+	uint8_t opcode=0;
 	opcode = (code_fetched>> 8)&0x0f;
 	Rs =  (code_fetched&0x00f0)>>4;
 	Rd = code_fetched&0x000f;
@@ -109,7 +111,7 @@ void Processeur::aluOperation(){
 }
 
 void Processeur::jumpRelative(){
-	short int off;
+	int16_t off;
 	if((code_fetched&0x0400)==0)
 		off=code_fetched&(~0x1800);
 	else
@@ -118,12 +120,12 @@ void Processeur::jumpRelative(){
 	std::cout<<"relative jump, off: "<<off<<" pc: "<<programm_counter<<std::endl;
 }
 
-unsigned short int Processeur::codeFetched(){
+uint16_t Processeur::codeFetched(){
 	return code_fetched;
 }
 
 void Processeur::loadRegImm(){
-	unsigned char Rn,im;
+	uint8_t Rn,im;
 	Rn=code_fetched&0x0f;
 	im=code_fetched>>4;
 	std::cout<<"load reg imm Rn: "<<(int)Rn<<":"<<std::hex<<registres(Rn)<<" im: "<<(int)im<<":"<<std::hex<<registres(im)<<std::endl;
@@ -132,10 +134,10 @@ void Processeur::loadRegImm(){
 }
 
 void Processeur::loadStoreIn(Programme& prog){
-	unsigned char Rh,Rl,Rn;
+	uint8_t Rh,Rl,Rn;
 	bool ls;
-	short unsigned int valL,valH;
-	unsigned int indirect;
+	uint16_t valL,valH;
+	uint32_t indirect;
 	Rh=(code_fetched&0xf00)>>8;
 	Rl=(code_fetched&0xf0)>>4;
 	Rn=code_fetched&0x0f;
@@ -160,17 +162,17 @@ void Processeur::loadStoreIn(Programme& prog){
 }
 
 void Processeur::storeRegToOffset(Programme& prog){
-	char off=(code_fetched>>4);
-	unsigned char Rn=code_fetched&0x0f;
+	int8_t off=(code_fetched>>4);
+	uint8_t Rn=code_fetched&0x0f;
 	std::cout<<"store reg to offset, Rn:"<<(int)Rn<<":"<<std::hex<<registres(Rn)<<" off: "<<(int)off<<std::endl;
-	std::cout<<"PC+off: "<<std::hex<<programm_counter+off<<":"<<std::hex<<prog.get(programm_counter+off)<<std::endl;
+	std::cout<<"PC+off: "<<std::hex<<(programm_counter+off)<<":"<<std::hex<<prog.get(programm_counter+off)<<std::endl;
 	prog.put(programm_counter+off,registres(Rn));
-	std::cout<<"result: "<<std::hex<<programm_counter+off<<":"<<std::hex<<prog.get(programm_counter+off)<<std::endl;
+	std::cout<<"result: "<<std::hex<<(programm_counter+off)<<":"<<std::hex<<prog.get(programm_counter+off)<<std::endl;
 }
 
 void Processeur::pushPop(Programme& prog){
-	unsigned int sp=(registres(10)<<16)+registres(11);
-	unsigned char im=(code_fetched&(~0x0080));
+	uint32_t sp=(registres(0x10)<<16)+registres(0x11);
+	uint8_t im=(code_fetched&(~0x0080));
 	if(code_fetched&0x0080){
 		std::cout<<"push, im: "<<(int)im<<":"<<std::hex<<registres(im)<<std::endl;
 		prog.put(sp,registres(im));
@@ -183,15 +185,15 @@ void Processeur::pushPop(Programme& prog){
 		std::cout<<"pop, SP: "<<std::hex<<sp<<":"<<std::hex<<prog.get(sp)<<std::endl;
 		std::cout<<"im: "<<(int)im<<":"<<std::hex<<registres(im)<<std::endl;
 	}
-	registres(10)=(sp>>16);
-	registres(11)=(sp);
+	registres(0x10)=(sp>>16);
+	registres(0x11)=(sp);
 }
 
 void Processeur::asmcOffReg(Programme prog){
-	unsigned char op=(code_fetched>>12)&0x03;
-	char off=code_fetched>>4;
-	unsigned char Rn=code_fetched&0x0f;
-	unsigned char aluOp;
+	uint8_t op=(code_fetched>>12)&0x03;
+	int8_t off=code_fetched>>4;
+	uint8_t Rn=code_fetched&0x0f;
+	uint8_t aluOp;
 	std::cout<<"add sub mov comp off reg\n"<<
 	"Rn: "<<(int)Rn<<":"<<std::hex<<registres(Rn)<<"\n"<<
 	"off: "<<(int)off<<" PC+off: "<<std::hex<<programm_counter+off<<":"<<
@@ -218,4 +220,14 @@ void Processeur::asmcOffReg(Programme prog){
 	}
 	std::cout<<"result: Rn:"<<(int)Rn<<":"<<std::hex<<registres(Rn)<<"\n"<<
 	"condition reg: "<<std::hex<<(unsigned int)alu.condition_reg()<<std::endl;
+}
+
+void Processeur::loadPCtoReg(){
+	uint8_t Rh,Rl;
+	Rh=(code_fetched>>4)&0x0f;
+	Rl=code_fetched&0x0f;
+	registres(Rh)=programm_counter>>16;
+	registres(Rl)=programm_counter;
+	std::cout<<"load PC to reg, Rh: "<<(int)Rh<<":"<<std::hex<<registres(Rh)<<
+	" Rl: "<<(int)Rl<<":"<<std::hex<<registres(Rl)<<std::endl;
 }

@@ -1,39 +1,39 @@
 #include "ALU.hpp"
 
-unsigned short int& ALU::inputS(){
+uint16_t& ALU::inputS(){
 	return minputS;
 }
 
-unsigned short int ALU::inputS() const{
+uint16_t ALU::inputS() const{
 	return minputS;
 }
 
-unsigned short int& ALU::inputD(){
+uint16_t& ALU::inputD(){
 	return minputD;
 }
 
-unsigned short int ALU::inputD() const{
+uint16_t ALU::inputD() const{
 	return minputD;
 }
 
-unsigned char& ALU::opcode(){
+uint8_t& ALU::opcode(){
 	return mopcode;
 }
 
-unsigned char ALU::opcode() const{
+uint8_t ALU::opcode() const{
 	return mopcode;
 }
 
-unsigned short int ALU::resultat() const{
+uint16_t ALU::resultat() const{
 	return mresultat;
 }
 
-unsigned char ALU::condition_reg() const{
+uint8_t ALU::condition_reg() const{
 	return mcondition_reg;
 }
 
 void ALU::update_state(){
-	unsigned int mresultat32=0;
+	uint32_t mresultat32=0;
 	mresultat=0;
 	switch(mopcode){
 		case 1:

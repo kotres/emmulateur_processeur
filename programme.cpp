@@ -13,8 +13,8 @@ Programme::Programme(std::string filename)
 	std::ifstream fichier(filename);
 	if(fichier.is_open()){
 		code.clear();
-		unsigned short int data;
-		unsigned int address=0;
+		uint16_t data;
+		uint32_t address=0;
 		while(!fichier.eof()){
 			fichier>>std::hex>>data;
 			code[address]=data;
@@ -23,18 +23,18 @@ Programme::Programme(std::string filename)
 	}
 }
 
-unsigned short int Programme::get(unsigned int i){
-	if(code.find(i)==code.end()){
+uint16_t Programme::get(uint32_t address){
+	if(code.find(address)==code.end()){
 		std::random_device rd;
 		std::mt19937 mt(rd());
     	std::uniform_int_distribution<unsigned int> dist(0, 0xffff);
-    	code[i]=dist(mt);
+    	code[address]=dist(mt);
 	}
-	return code.at(i);
+	return code.at(address);
 }
 
-void Programme::put(unsigned int i,unsigned short int data){
-	code[i]=data;
+void Programme::put(uint32_t address,uint16_t data){
+	code[address]=data;
 }
 
 unsigned int Programme::taille(){

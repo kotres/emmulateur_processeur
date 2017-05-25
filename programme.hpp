@@ -4,13 +4,14 @@
 
 #include <map>
 #include <string>
+#include <cstdint>
 
 class Programme
 {
-	std::map<unsigned int,unsigned short int> code;
+	std::map<uint32_t,uint16_t> code;
 public:
-	unsigned short int get(unsigned int i);
-	void put(unsigned int i,unsigned short int data);
+	uint16_t get(uint32_t address);
+	void put(uint32_t address,uint16_t data);
 	unsigned int taille();
 	Programme();
 	Programme(std::string filename);

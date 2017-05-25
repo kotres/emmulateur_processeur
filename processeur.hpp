@@ -3,6 +3,7 @@
 #define PROCESSEUR_HPP
 
 #include <list>
+#include <cstdint>
 
 #include "registres.hpp"
 #include "ALU.hpp"
@@ -14,8 +15,8 @@ class Processeur
 private:
 	ALU alu;
 	Registres registres;
-	unsigned int programm_counter;
-	unsigned short int code_fetched;
+	uint32_t programm_counter;
+	uint16_t code_fetched;
 	std::list<Instruction>listeInstructions;
 	nomInstruction instruction;
 	void aluOperation();
@@ -25,12 +26,13 @@ private:
 	void storeRegToOffset(Programme& prog);
 	void pushPop(Programme& prog);
 	void asmcOffReg(Programme prog);
+	void loadPCtoReg();
 public:
 	void fetch(Programme prog);
 	void decode();
 	void execute(Programme& prog);
 	Processeur();
-	unsigned short int codeFetched();
+	uint16_t codeFetched();
 };
 
 #endif
