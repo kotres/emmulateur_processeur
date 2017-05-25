@@ -78,6 +78,7 @@ void Processeur::execute(Programme& prog){
 		case asmc_im_Reg:
 		break;
 		case asmc_off_reg:
+			asmcOffReg(prog);
 		break;
 		default:
 		break;
@@ -96,10 +97,15 @@ void Processeur::aluOperation(){
 	std::cout<<"alu operation, Rs:"<<(int)Rs<<":"<<std::hex<<registres(Rs);
 	alu.inputD()=registres(Rd);
 	std::cout<<" Rd:"<<(int)Rd<<":"<<std::hex<<registres(Rd)<<std::endl;
-	alu.opcode()=opcode;
+	if(opcode!=14)
+		alu.opcode()=opcode;
+	else
+		alu.opcode()=11;
 	alu.update_state();
-	registres(Rd)=alu.resultat();
+	if(opcode!=14)
+		registres(Rd)=alu.resultat();
 	std::cout<<" resultat: "<<std::hex<<alu.resultat()<<std::endl;
+	std::cout<<"cc: "<<std::hex<<(int)alu.condition_reg()<<std::endl;
 }
 
 void Processeur::jumpRelative(){
@@ -154,7 +160,7 @@ void Processeur::loadStoreIn(Programme& prog){
 }
 
 void Processeur::storeRegToOffset(Programme& prog){
-	char off=code_fetched>>4;
+	char off=(code_fetched>>4);
 	unsigned char Rn=code_fetched&0x0f;
 	std::cout<<"store reg to offset, Rn:"<<(int)Rn<<":"<<std::hex<<registres(Rn)<<" off: "<<(int)off<<std::endl;
 	std::cout<<"PC+off: "<<std::hex<<programm_counter+off<<":"<<std::hex<<prog.get(programm_counter+off)<<std::endl;
@@ -179,4 +185,37 @@ void Processeur::pushPop(Programme& prog){
 	}
 	registres(10)=(sp>>16);
 	registres(11)=(sp);
+}
+
+void Processeur::asmcOffReg(Programme prog){
+	unsigned char op=(code_fetched>>12)&0x03;
+	char off=code_fetched>>4;
+	unsigned char Rn=code_fetched&0x0f;
+	unsigned char aluOp;
+	std::cout<<"add sub mov comp off reg\n"<<
+	"Rn: "<<(int)Rn<<":"<<std::hex<<registres(Rn)<<"\n"<<
+	"off: "<<(int)off<<" PC+off: "<<std::hex<<programm_counter+off<<":"<<
+	std::hex<<prog.get(programm_counter+off)<<std::endl;
+	std::cout<<"operation: "<<(int)op<<std::endl;
+	if (op==1||op==3)
+	{
+		aluOp=11;
+	}
+	else
+		aluOp=10;
+	if(op!=2){
+		alu.inputS()=registres(Rn);
+		alu.inputD()=prog.get(programm_counter+off);
+		alu.opcode()=aluOp;
+		alu.update_state();
+		if (op!=3)
+		{
+			registres(Rn)=alu.resultat();
+		}
+	}
+	else{
+		registres(Rn)=prog.get(programm_counter+off);
+	}
+	std::cout<<"result: Rn:"<<(int)Rn<<":"<<std::hex<<registres(Rn)<<"\n"<<
+	"condition reg: "<<std::hex<<(unsigned int)alu.condition_reg()<<std::endl;
 }

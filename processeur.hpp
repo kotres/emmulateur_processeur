@@ -24,6 +24,7 @@ private:
 	void loadStoreIn(Programme& prog);
 	void storeRegToOffset(Programme& prog);
 	void pushPop(Programme& prog);
+	void asmcOffReg(Programme prog);
 public:
 	void fetch(Programme prog);
 	void decode();
