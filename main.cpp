@@ -3,12 +3,15 @@
 #include "processeur.hpp"
 
 int main(){
+	char quitter;
 	Processeur proc;
 	Programme prog("mon_code.hex");
-	for(unsigned int i=0;i<prog.taille();i++){
+	while(quitter!='q'){
 		proc.fetch(prog);
 		proc.decode();
 		proc.execute(prog);
+		std::cin>>quitter;
+		std::cout<<std::endl;
 	}
 	return 0; 
 }

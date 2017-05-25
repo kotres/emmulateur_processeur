@@ -6,12 +6,12 @@
 enum nomInstruction
 {
 	nop,
-	ALUoperation,
+	ALU_operation,
 	jump_conditional,
 	jump_relative,
 	load_reg_imm,
 	load_store_in,
-	Load_store_offset,
+	store_reg_to_offset,
 	software_interrupt,
 	push_pop,
 	reti,

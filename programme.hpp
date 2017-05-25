@@ -2,12 +2,12 @@
 #ifndef PROGRAMME_HPP
 #define PROGRAMME_HPP
 
-#include <vector>
+#include <map>
 #include <string>
 
 class Programme
 {
-	std::vector<unsigned short int> code;
+	std::map<unsigned int,unsigned short int> code;
 public:
 	unsigned short int get(unsigned int i);
 	void put(unsigned int i,unsigned short int data);

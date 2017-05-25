@@ -77,12 +77,20 @@ void ALU::update_state(){
 			mresultat32=minputS-minputD;
 			mresultat=mresultat32;
 		break;
+		case 12:
+			mresultat32=++minputS;
+			mresultat=mresultat32;
+		break;
+		case 13:
+			mresultat32=--minputS;
+			mresultat=mresultat32;
+		break;
 		default:
 			mresultat=0;
 		break;
 	}
 	mcondition_reg=0x00;
-	if(mopcode==10||mopcode==11){
+	if(mopcode>=10&&mopcode<=13){
 		if(mresultat32<<16!=0)
 			mcondition_reg|=0x01;
 	}

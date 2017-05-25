@@ -4,14 +4,14 @@
 #define RETI 0x8200
 
 Processeur::Processeur()
-:alu(),registres(),programm_counter(0),code_fetched(0),listeInstructions({Instruction(ALUoperation,0x0100,0x0fff)}),
+:alu(),registres(),programm_counter(0),code_fetched(0),listeInstructions({Instruction(ALU_operation,0x0100,0x0fff)}),
 instruction(nop)
 {
 	listeInstructions.push_back(Instruction(jump_conditional,0x1000,0x17ff));
 	listeInstructions.push_back(Instruction(jump_relative,0x1800,0x1fff));
 	listeInstructions.push_back(Instruction(load_reg_imm,0x2000,0x27ff));
 	listeInstructions.push_back(Instruction(load_store_in,0x4000,0x5fff));
-	listeInstructions.push_back(Instruction(Load_store_offset,0x6000,0x7fff));
+	listeInstructions.push_back(Instruction(store_reg_to_offset,0x6000,0x6fff));
 	listeInstructions.push_back(Instruction(software_interrupt,0x8000,0x80ff));
 	listeInstructions.push_back(Instruction(push_pop,0x8100,0x81ff));
 	listeInstructions.push_back(Instruction(reti,0x8200,0x8200));
@@ -38,18 +38,18 @@ void Processeur::decode(){
 	}
 }
 
-void Processeur::execute(Programme prog){
+void Processeur::execute(Programme& prog){
 	std::cout<<"PC: "<<std::hex<<programm_counter<<", code fetched: "<<std::hex<<code_fetched<<":"<<std::endl;
 	switch(instruction){
 		case nop:
 		break;
-		case ALUoperation:
-			alu_operation();
+		case ALU_operation:
+			aluOperation();
 		break;
 		case jump_conditional:
 		break;
 		case jump_relative:
-			JumpRelative();
+			jumpRelative();
 		break;
 		case load_reg_imm:
 			loadRegImm();
@@ -57,11 +57,13 @@ void Processeur::execute(Programme prog){
 		case load_store_in:
 			loadStoreIn(prog);
 		break;
-		case Load_store_offset:
+		case store_reg_to_offset:
+			storeRegToOffset(prog);
 		break;
 		case software_interrupt:
 		break;
 		case push_pop:
+			pushPop(prog);
 		break;
 		case reti:
 		break;
@@ -84,7 +86,7 @@ void Processeur::execute(Programme prog){
 		programm_counter++;
 }
 
-void Processeur::alu_operation(){
+void Processeur::aluOperation(){
 	unsigned char Rs,Rd;
 	unsigned char opcode=0;
 	opcode = (code_fetched>> 8)&0x0f;
@@ -100,7 +102,7 @@ void Processeur::alu_operation(){
 	std::cout<<" resultat: "<<std::hex<<alu.resultat()<<std::endl;
 }
 
-void Processeur::JumpRelative(){
+void Processeur::jumpRelative(){
 	short int off;
 	if((code_fetched&0x0400)==0)
 		off=code_fetched&(~0x1800);
@@ -123,7 +125,7 @@ void Processeur::loadRegImm(){
 	std::cout<<"resultat: Rn: "<<std::hex<<registres(Rn)<<" im: "<<std::hex<<registres(im)<<std::endl;
 }
 
-void Processeur::loadStoreIn(Programme prog){
+void Processeur::loadStoreIn(Programme& prog){
 	unsigned char Rh,Rl,Rn;
 	bool ls;
 	short unsigned int valL,valH;
@@ -137,17 +139,44 @@ void Processeur::loadStoreIn(Programme prog){
 	indirect=valL+(valH<<16);
 	if(ls){
 		registres(Rn)=prog.get(indirect);
-		std::cout<<"load indirect to Rn, Rn: "<<(int)Rn<<"Rh: "<<(int)Rh<<":"<<std::hex
-		<<valH<<"Rl: "<<(int)Rl<<":"<<std::hex<<valL<<std::endl;
+		std::cout<<"load indirect to Rn, Rn: "<<(int)Rn<<" Rh: "<<(int)Rh<<":"<<std::hex
+		<<valH<<" Rl: "<<(int)Rl<<":"<<std::hex<<valL<<std::endl;
 		std::cout<<"indirect: "<<indirect<<":"<<std::hex<<prog.get(indirect)<<std::endl;
 		std::cout<<"result: Rn:"<<(int)Rn<<":"<<std::hex<<registres(Rn)<<std::endl;
 	}
 	else
 	{
 		prog.put(indirect,registres(Rn));
-		registres(Rn)=prog.get(indirect);
-		std::cout<<"load Rn to indirect, Rn: "<<(int)Rn<<"Rh: "<<(int)Rh<<":"<<std::hex
-		<<valH<<"Rl: "<<(int)Rl<<":"<<std::hex<<valL<<std::endl;
+		std::cout<<"load Rn to indirect, Rn: "<<(int)Rn<<" Rh: "<<(int)Rh<<":"<<std::hex
+		<<valH<<" Rl: "<<(int)Rl<<":"<<std::hex<<valL<<std::endl;
 		std::cout<<"result: indirect: "<<indirect<<":"<<std::hex<<prog.get(indirect)<<std::endl;
 	}
+}
+
+void Processeur::storeRegToOffset(Programme& prog){
+	char off=code_fetched>>4;
+	unsigned char Rn=code_fetched&0x0f;
+	std::cout<<"store reg to offset, Rn:"<<(int)Rn<<":"<<std::hex<<registres(Rn)<<" off: "<<(int)off<<std::endl;
+	std::cout<<"PC+off: "<<std::hex<<programm_counter+off<<":"<<std::hex<<prog.get(programm_counter+off)<<std::endl;
+	prog.put(programm_counter+off,registres(Rn));
+	std::cout<<"result: "<<std::hex<<programm_counter+off<<":"<<std::hex<<prog.get(programm_counter+off)<<std::endl;
+}
+
+void Processeur::pushPop(Programme& prog){
+	unsigned int sp=(registres(10)<<16)+registres(11);
+	unsigned char im=(code_fetched&(~0x0080));
+	if(code_fetched&0x0080){
+		std::cout<<"push, im: "<<(int)im<<":"<<std::hex<<registres(im)<<std::endl;
+		prog.put(sp,registres(im));
+		sp--;
+		std::cout<<"SP: "<<std::hex<<sp<<":"<<std::hex<<prog.get(sp)<<std::endl;
+	}
+	else{
+		registres(im)=prog.get(sp);
+		sp++;
+		std::cout<<"pop, SP: "<<std::hex<<sp<<":"<<std::hex<<prog.get(sp)<<std::endl;
+		std::cout<<"im: "<<(int)im<<":"<<std::hex<<registres(im)<<std::endl;
+	}
+	registres(10)=(sp>>16);
+	registres(11)=(sp);
 }
