@@ -3,23 +3,26 @@
 #ifndef INSTRUCTION_HPP
 #define INSTRUCTION_HPP
 
-enum nomInstruction
-{
-	nop,
-	
-};
+#include <cstdint>
+#include "processeur.hpp"
+#include "programme.hpp"
+
+class Processeur;
+
+typedef void (Processeur::*procfunction)(Programme& programme);
 
 class Instruction
 {
 private:
-	nomInstruction nom;
-	unsigned short int min;
-	unsigned short int max;
+	uint16_t min;
+	uint16_t mopcode;
+	uint16_t max;
+	procfunction func;
 public:
-	Instruction(enum nomInstruction nom,unsigned short int min,unsigned short int max);
-	bool valIn(unsigned short int val);
-	nomInstruction Nom();
-
+	Instruction(uint16_t min,uint16_t opcode,uint16_t max,procfunction fun);
+	bool valIn(uint16_t val) const;
+	uint16_t opcode() const;
+	void execute(Processeur* proc,Programme& programme);
 };
 
 #endif

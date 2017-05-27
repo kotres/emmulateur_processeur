@@ -6,8 +6,10 @@
 #define THREE_WORD_MIN 0x8b00
 
 Processeur::Processeur()
-:alu(),registres(),programm_counter(0),stack_pointer(0),code_fetched()
-{}
+:alu(),registres(),programm_counter(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(nullptr)
+{
+	liste_instructions.push_back(Instruction(0,0,0,&Processeur::nop));
+}
 
 void Processeur::fetch(Programme prog){
 	if (programm_counter<0xff)
@@ -44,9 +46,31 @@ void Processeur::fetch(Programme prog){
 }
 
 void Processeur::decode(){
-
+	std::list<Instruction>::iterator it;
+	for(it=liste_instructions.begin();it!=liste_instructions.end();it++){
+		if (it->valIn(code_fetched.at(0)))
+		{
+			instruction=it;
+		}
+	}
 }
 
-void Processeur::execute(){
+void Processeur::execute(Programme &prog){
+	instruction->execute(this,prog);
 	programm_counter++;
+}
+
+void Processeur::nop(Programme &prog){
+	uint16_t dont_care=prog(0);
+	dont_care++;
+	std::cout<<"nop executé"<<std::endl;
+}
+
+Processeur::Processeur(const Processeur& proc)
+:alu(proc.alu),registres(),programm_counter(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(nullptr)
+{}
+
+Processeur& Processeur::operator=(const Processeur& proc){
+	this->alu=proc.alu;
+	return *this;
 }
