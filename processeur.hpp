@@ -4,8 +4,8 @@
 
 #include <list>
 #include <cstdint>
+#include <array>
 
-#include "registres.hpp"
 #include "ALU.hpp"
 #include "programme.hpp"
 #include "instruction.hpp"
@@ -14,25 +14,15 @@ class Processeur
 {
 private:
 	ALU alu;
-	Registres registres;
+	std::array<uint16_t,16> registres;
 	uint32_t programm_counter;
-	uint16_t code_fetched;
-	std::list<Instruction>listeInstructions;
-	nomInstruction instruction;
-	void aluOperation();
-	void jumpRelative();
-	void loadRegImm();
-	void loadStoreIn(Programme& prog);
-	void storeRegToOffset(Programme& prog);
-	void pushPop(Programme& prog);
-	void asmcOffReg(Programme prog);
-	void loadPCtoReg();
+	uint32_t stack_pointer;
+	std::array<uint16_t,3> code_fetched;
 public:
 	void fetch(Programme prog);
 	void decode();
-	void execute(Programme& prog);
+	void execute();
 	Processeur();
-	uint16_t codeFetched();
 };
 
 #endif

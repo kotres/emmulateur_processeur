@@ -6,21 +6,7 @@
 enum nomInstruction
 {
 	nop,
-	ALU_operation,
-	jump_conditional,
-	jump_relative,
-	load_reg_imm,
-	load_store_in,
-	store_reg_to_offset,
-	software_interrupt,
-	push_pop,
-	reti,
-	sleep,
-	load_PC_to_reg,
-	jump_indirect,
-	djnz,
-	asmc_im_Reg,
-	asmc_off_reg,
+	
 };
 
 class Instruction

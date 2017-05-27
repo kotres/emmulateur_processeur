@@ -91,7 +91,7 @@ void ALU::update_state(){
 	}
 	mcondition_reg=0x00;
 	if(mopcode>=10&&mopcode<=13){
-		if(mresultat32<<16!=0)
+		if(mresultat32>>16!=0)
 			mcondition_reg|=0x01;
 	}
 	if(mresultat==0)

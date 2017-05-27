@@ -9,7 +9,7 @@ int main(){
 	while(quitter!='q'){
 		proc.fetch(prog);
 		proc.decode();
-		proc.execute(prog);
+		proc.execute();
 		std::cin>>quitter;
 		std::cout<<std::endl;
 	}
