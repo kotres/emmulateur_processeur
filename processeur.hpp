@@ -23,6 +23,8 @@ private:
 	std::list<Instruction> liste_instructions;
 	std::list<Instruction>::iterator instruction;
 	void nop(Programme &prog);
+	void undefined(Programme &prog);
+	void loadWordToRegister(Programme &prog);
 public:
 	void fetch(Programme prog);
 	void decode();

@@ -18,11 +18,13 @@ private:
 	uint16_t mopcode;
 	uint16_t max;
 	procfunction func;
+	bool incPC;
 public:
-	Instruction(uint16_t min,uint16_t opcode,uint16_t max,procfunction fun);
+	Instruction(uint16_t min,uint16_t opcode,uint16_t max,procfunction fun,bool incpc);
 	bool valIn(uint16_t val) const;
 	uint16_t opcode() const;
 	void execute(Processeur* proc,Programme& programme);
+	bool increasePC() const;
 };
 
 #endif

@@ -1,7 +1,7 @@
 #include "instruction.hpp"
 
-Instruction::Instruction(uint16_t min,uint16_t opcode,uint16_t max,procfunction fun)
-:min(min),mopcode(opcode),max(max),func(fun)
+Instruction::Instruction(uint16_t min,uint16_t opcode,uint16_t max,procfunction fun,bool incpc)
+:min(min),mopcode(opcode),max(max),func(fun),incPC(incpc)
 {}
 
 bool Instruction::valIn(uint16_t val) const{
@@ -14,4 +14,8 @@ uint16_t Instruction::opcode() const{
 
 void Instruction::execute(Processeur* proc,Programme& programme){
 	(proc->*(this->func)) (programme);
+}
+
+bool Instruction::increasePC() const{
+	return incPC;
 }

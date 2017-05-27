@@ -8,7 +8,9 @@
 Processeur::Processeur()
 :alu(),registres(),programm_counter(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(nullptr)
 {
-	liste_instructions.push_back(Instruction(0,0,0,&Processeur::nop));
+	liste_instructions.push_back(Instruction(0,0,0,&Processeur::nop,true));
+	liste_instructions.push_back(Instruction(1,1,1,&Processeur::undefined,true));
+	liste_instructions.push_back(Instruction(0x5000,0x5000,0x500f,&Processeur::loadWordToRegister,true));
 }
 
 void Processeur::fetch(Programme prog){
@@ -32,7 +34,7 @@ void Processeur::fetch(Programme prog){
 		{
 			std::cout<<"2 word code fetched:"<<std::endl
 			<<std::hex<<(programm_counter-1)<<":"<<std::hex<<code_fetched.at(0)<<std::endl;
-			std::cout<<std::hex<<programm_counter<<":"<<std::hex<<code_fetched.at(0)<<std::endl;
+			std::cout<<std::hex<<programm_counter<<":"<<std::hex<<code_fetched.at(1)<<std::endl;
 		}
 		else{
 			programm_counter++;
@@ -46,6 +48,8 @@ void Processeur::fetch(Programme prog){
 }
 
 void Processeur::decode(){
+	instruction=liste_instructions.begin();
+	instruction++;
 	std::list<Instruction>::iterator it;
 	for(it=liste_instructions.begin();it!=liste_instructions.end();it++){
 		if (it->valIn(code_fetched.at(0)))
@@ -57,7 +61,8 @@ void Processeur::decode(){
 
 void Processeur::execute(Programme &prog){
 	instruction->execute(this,prog);
-	programm_counter++;
+	if(instruction->increasePC())
+		programm_counter++;
 }
 
 void Processeur::nop(Programme &prog){
@@ -65,6 +70,23 @@ void Processeur::nop(Programme &prog){
 	dont_care++;
 	std::cout<<"nop executé"<<std::endl;
 }
+
+void Processeur::undefined(Programme &prog){
+	uint16_t dont_care=prog(0);
+	dont_care++;
+	std::cout<<"undifined operation"<<std::endl;
+}
+
+void Processeur::loadWordToRegister(Programme &prog){
+	uint16_t dont_care=prog(0);
+	dont_care++;
+	unsigned int Rn=code_fetched.at(0)&0x0f;
+	registres.at(Rn)=code_fetched.at(1);
+	std::cout<<"load word to register"<<std::endl;
+	std::cout<<"R"<<Rn<<"="<<std::hex<<registres.at(Rn)<<std::endl;
+}
+
+
 
 Processeur::Processeur(const Processeur& proc)
 :alu(proc.alu),registres(),programm_counter(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(nullptr)
