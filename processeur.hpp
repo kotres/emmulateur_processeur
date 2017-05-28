@@ -35,16 +35,11 @@ private:
 
 	EtatProcesseur etat;
 	uint32_t newPC;
-
-	void nop(Programme &prog);
-	void undefined(Programme &prog);
-	void loadWordToRegister(Programme &prog);
 	void fetch1(Programme prog);
 	void fetch2(Programme prog);
 	void fetch3(Programme prog);
-public:
 	void decode();
-	void execute(Programme &prog);
+public:
 	void clock_cycle(Programme& prog);
 	Processeur();
 	Processeur(const Processeur& proc);

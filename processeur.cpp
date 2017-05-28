@@ -9,9 +9,9 @@ Processeur::Processeur()
 :alu(),registres(),programm_counter(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(nullptr),
 etat(FETCH1),newPC(0)
 {
-	liste_instructions.push_back(Instruction(0,0,0,&Processeur::nop,true));
-	liste_instructions.push_back(Instruction(1,1,1,&Processeur::undefined,true));
-	liste_instructions.push_back(Instruction(0x5000,0x5000,0x500f,&Processeur::loadWordToRegister,true));
+	liste_instructions.push_back(Instruction(0x0,0x0,false,no_source_dest,no_type,no_op));
+	liste_instructions.push_back(Instruction(0x1,0x1,false,no_source_dest,no_type,no_op));
+	liste_instructions.push_back(Instruction(0x2,0x2,false,no_source_dest,no_type,no_op));
 }
 
 void Processeur::fetch1(Programme prog){
@@ -71,6 +71,7 @@ void Processeur::fetch3(Programme prog){
 }
 
 void Processeur::decode(){
+	std::cout<<"decode"<<std::endl;
 	instruction=liste_instructions.begin();
 	instruction++;
 	std::list<Instruction>::iterator it;
@@ -80,36 +81,9 @@ void Processeur::decode(){
 			instruction=it;
 		}
 	}
+	std::cout<<"instruction "<<std::hex<<instruction->opcode()<<" trouvé"<<std::endl;
+	etat=READ;
 }
-
-void Processeur::execute(Programme &prog){
-	instruction->execute(this,prog);
-	if(instruction->increasePC())
-		programm_counter++;
-}
-
-void Processeur::nop(Programme &prog){
-	uint16_t dont_care=prog(0);
-	dont_care++;
-	std::cout<<"nop executé"<<std::endl;
-}
-
-void Processeur::undefined(Programme &prog){
-	uint16_t dont_care=prog(0);
-	dont_care++;
-	std::cout<<"undifined operation"<<std::endl;
-}
-
-void Processeur::loadWordToRegister(Programme &prog){
-	uint16_t dont_care=prog(0);
-	dont_care++;
-	unsigned int Rn=code_fetched.at(0)&0x0f;
-	registres.at(Rn)=code_fetched.at(1);
-	std::cout<<"load word to register"<<std::endl;
-	std::cout<<"R"<<Rn<<"="<<std::hex<<registres.at(Rn)<<std::endl;
-}
-
-
 
 Processeur::Processeur(const Processeur& proc)
 :alu(proc.alu),registres(),programm_counter(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(nullptr),
@@ -133,7 +107,8 @@ void Processeur::clock_cycle(Programme& prog){
 			fetch3(prog);
 		break;
 		case DECODE:
-		//break;
+			decode();
+		break;
 		case READ:
 		//break;
 		case EXECUTE:
