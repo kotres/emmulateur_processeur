@@ -7,9 +7,7 @@ int main(){
 	Processeur proc;
 	Programme prog("mon_code.hex");
 	while(quitter!='q'){
-		proc.fetch(prog);
-		proc.decode();
-		proc.execute(prog);
+		proc.clock_cycle(prog);
 		std::cin>>quitter;
 		std::cout<<std::endl;
 	}

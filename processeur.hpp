@@ -12,6 +12,16 @@
 
 class Instruction;
 
+enum EtatProcesseur{
+	FETCH1,
+	FETCH2,
+	FETCH3,
+	DECODE,
+	READ,
+	EXECUTE,
+	WRITE,
+};
+
 class Processeur
 {
 private:
@@ -22,13 +32,20 @@ private:
 	std::array<uint16_t,3> code_fetched;
 	std::list<Instruction> liste_instructions;
 	std::list<Instruction>::iterator instruction;
+
+	EtatProcesseur etat;
+	uint32_t newPC;
+
 	void nop(Programme &prog);
 	void undefined(Programme &prog);
 	void loadWordToRegister(Programme &prog);
+	void fetch1(Programme prog);
+	void fetch2(Programme prog);
+	void fetch3(Programme prog);
 public:
-	void fetch(Programme prog);
 	void decode();
 	void execute(Programme &prog);
+	void clock_cycle(Programme& prog);
 	Processeur();
 	Processeur(const Processeur& proc);
 	Processeur& operator=(const Processeur& proc);
