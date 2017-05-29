@@ -34,10 +34,11 @@ private:
 	std::list<Instruction>::iterator instruction;
 
 	EtatProcesseur etat;
-	uint32_t newPC;
-	void fetch1(Programme prog);
-	void fetch2(Programme prog);
-	void fetch3(Programme prog);
+	uint16_t buffer1,buffer2;
+	void fetch1(Programme& prog);
+	void fetch2(Programme& prog);
+	void fetch3(Programme& prog);
+	void read(Programme& prog);
 	void decode();
 public:
 	void clock_cycle(Programme& prog);

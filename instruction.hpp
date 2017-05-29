@@ -7,27 +7,28 @@
 #include "programme.hpp"
 
 
-enum AluOperation{
+/*enum AluOperation{
 	no_op,
 	add,
 	sub
-};
+};*/
 
 enum SourceDestination{
-	no_source_dest,
-	word,
-	address,
-	Rn,
-	offset
+	NO_SOURCE_DEST,
+	Word,
+	ADDRESS,
+	RN,
+	OFFSET,
+	INDIRECT
 };
 
-enum InstructionType{
+/*enum InstructionType{
 	no_type,
 	jump,
 	alu,
 	load,
 	store,
-};
+};*/
 
 class Instruction
 {
@@ -35,13 +36,14 @@ private:
 	uint16_t mopcode;
 	uint16_t max;
 	bool indirect;
-	SourceDestination sd;
-	InstructionType type;
-	AluOperation op;
+	SourceDestination msource1;
+	//InstructionType type;
+	//AluOperation op;
 public:
-	Instruction(uint16_t opcode,uint16_t max,bool indirect,SourceDestination sd,InstructionType type,AluOperation aluOp);
+	Instruction(uint16_t opcode,uint16_t max,bool indirect,SourceDestination source1/*,InstructionType type,AluOperation aluOp*/);
 	bool valIn(uint16_t val) const;
 	uint16_t opcode() const;
+	SourceDestination source1() const;
 };
 
 #endif
