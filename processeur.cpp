@@ -7,10 +7,11 @@
 
 Processeur::Processeur()
 :alu(),registres(),programm_counter(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(nullptr),
-etat(FETCH1),buffer1(0),buffer2(0)
+etat(FETCH1),buffer(0),buffer2(0)
 {
 	liste_instructions.push_back(Instruction(0x0,0x0,false,NO_SOURCE_DEST));
 	liste_instructions.push_back(Instruction(0x1,0x1,false,NO_SOURCE_DEST));
+	liste_instructions.push_back(Instruction(0x5200,0x52ff,false,OFFSET));
 	liste_instructions.push_back(Instruction(0x0c00,0x0cff,false,RN));
 	liste_instructions.push_back(Instruction(0x5010,0x501f,false,Word));
 	liste_instructions.push_back(Instruction(0x8390,0x839f,false,ADDRESS));
@@ -83,12 +84,43 @@ void Processeur::decode(){
 		}
 	}
 	std::cout<<"instruction "<<std::hex<<instruction->opcode()<<" trouvé"<<std::endl;
-	etat=READ;
+
+		switch(instruction->source1()){
+		case NO_SOURCE_DEST:
+			buffer=0;
+		break;
+		case Word:
+			buffer=code_fetched.at(1);
+		break;
+		case ADDRESS:
+			etat=READ;
+		break;
+		case RN:
+		{
+			unsigned int Rs;
+			Rs=(code_fetched.at(0)&0xf0)>>4;
+			buffer=registres.at(Rs);
+		}
+		break;
+		case OFFSET:
+			etat=READ;
+		break;
+		case INDIRECT:
+			etat=READ;
+		break;
+		default:
+		break;
+	}
+	if(etat!=READ){
+		etat=EXECUTE;
+		std::cout<<"source1: "<<std::hex<<buffer<<std::endl;
+	}
+
 }
 
 Processeur::Processeur(const Processeur& proc)
 :alu(proc.alu),registres(),programm_counter(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(nullptr),
-etat(FETCH1),buffer1(0),buffer2(0)
+etat(FETCH1),buffer(0),buffer2(0)
 {}
 
 Processeur& Processeur::operator=(const Processeur& proc){
@@ -99,28 +131,37 @@ Processeur& Processeur::operator=(const Processeur& proc){
 void Processeur::read(Programme& prog){
 
 	switch(instruction->source1()){
-		unsigned int Rs;
 		case NO_SOURCE_DEST:
-			buffer1=0;
 		break;
 		case Word:
-			buffer1=code_fetched.at(1);
 		break;
 		case ADDRESS:
-			buffer1=prog((code_fetched.at(1)<<16)+code_fetched.at(2));
+			buffer=prog((code_fetched.at(1)<<16)+code_fetched.at(2));
 		break;
 		case RN:
-			Rs=(code_fetched.at(0)&0xf0)>>4;
-			buffer1=registres.at(Rs);
 		break;
 		case OFFSET:
+		{
+			uint32_t uoff=((code_fetched.at(0)&0xf0)<<12)+code_fetched.at(1);
+			if(code_fetched.at(0)&0x80)
+				uoff|=0xfff00000;
+			int32_t off=uoff;
+			buffer=prog(programm_counter+off);
+		}
 		break;
 		case INDIRECT:
+		{
+			unsigned int Rh,Rl;
+			Rh=(code_fetched.at(0)&0xf0)>>4;
+			Rl=code_fetched.at(0)&0x0f;
+			uint32_t addr=(registres.at(Rh)<<16)+registres.at(Rl);
+			buffer=prog(addr);
+		}
 		break;
 		default:
 		break;
 	}
-	std::cout<<"source1: "<<std::hex<<buffer1<<std::endl;
+	std::cout<<"source1: "<<std::hex<<buffer<<std::endl;
 	etat=EXECUTE;
 }
 

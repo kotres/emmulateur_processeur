@@ -36,11 +36,11 @@ private:
 	uint16_t mopcode;
 	uint16_t max;
 	bool indirect;
-	SourceDestination msource1;
+	SourceDestination msource;
 	//InstructionType type;
 	//AluOperation op;
 public:
-	Instruction(uint16_t opcode,uint16_t max,bool indirect,SourceDestination source1/*,InstructionType type,AluOperation aluOp*/);
+	Instruction(uint16_t opcode,uint16_t max,bool indirect,SourceDestination source/*,InstructionType type,AluOperation aluOp*/);
 	bool valIn(uint16_t val) const;
 	uint16_t opcode() const;
 	SourceDestination source1() const;

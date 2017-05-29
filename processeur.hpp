@@ -34,7 +34,7 @@ private:
 	std::list<Instruction>::iterator instruction;
 
 	EtatProcesseur etat;
-	uint16_t buffer1,buffer2;
+	uint16_t buffer,buffer2;
 	void fetch1(Programme& prog);
 	void fetch2(Programme& prog);
 	void fetch3(Programme& prog);
