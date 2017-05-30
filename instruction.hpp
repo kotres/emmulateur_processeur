@@ -13,37 +13,36 @@
 	sub
 };*/
 
-enum SourceDestination{
+/*enum SourceDestination{
 	NO_SOURCE_DEST,
 	Word,
 	ADDRESS,
 	RN,
 	OFFSET,
 	INDIRECT
-};
-
-/*enum InstructionType{
-	no_type,
-	jump,
-	alu,
-	load,
-	store,
 };*/
+
+enum InstructionType{
+	NOP,
+	ILLEGAL,
+	JUMP,
+	ALU_OP,
+	LOAD,
+	STORE,
+};
 
 class Instruction
 {
 private:
 	uint16_t mopcode;
-	uint16_t max;
-	bool indirect;
-	SourceDestination msource;
-	//InstructionType type;
+	uint16_t mopcode_size;
+	InstructionType mtype;
 	//AluOperation op;
 public:
-	Instruction(uint16_t opcode,uint16_t max,bool indirect,SourceDestination source/*,InstructionType type,AluOperation aluOp*/);
+	Instruction(uint16_t opcode,uint16_t opcode_size,InstructionType type);
 	bool valIn(uint16_t val) const;
 	uint16_t opcode() const;
-	SourceDestination source1() const;
+	InstructionType type() const;
 };
 
 #endif
