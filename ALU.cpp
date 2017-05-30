@@ -44,6 +44,9 @@ void ALU::update_state(){
 		case AND:
 			mresultat=minputL&minputR;
 		break;
+		case NAND:
+			mresultat=~(minputL&minputR);
+		break;
 		case OR:
 			mresultat=minputL|minputR;
 		break;
@@ -56,6 +59,18 @@ void ALU::update_state(){
 		case TCP:
 			mresultat=-minputL;
 		break;
+		case SET:
+			mresultat=0xffff;
+		break;
+		case SETB:
+			mresultat=minputL|(0x01<<minputR);
+		break;
+		case CLR:
+			mresultat=0x0;
+		break;
+		case CLRB:
+			mresultat=minputL&(~(0x01<<minputR));
+		break;
 		case LLS:
 			mresultat=minputL<<minputR;
 		break;
@@ -64,6 +79,9 @@ void ALU::update_state(){
 		break;
 		case UMUL:
 			mresultat=(minputL&0x00ff)*(minputR&0x00ff);
+		break;
+		case SMUL:
+			mresultat=((int8_t)(minputL&0x00ff))*((int8_t)(minputR&0x00ff));
 		break;
 		case UDIV:
 			if (!minputR)
@@ -74,12 +92,38 @@ void ALU::update_state(){
 				mresultat=0;
 			}
 		break;
+		case SDIV:
+			if (!minputR)
+			{
+				mresultat=(int16_t)minputL/(int16_t)minputR;
+			}
+			else{
+				mresultat=0;
+			}
+		break;
 		case ADD:
 			mresultat32=minputL+minputR;
 			mresultat=mresultat32;
 		break;
+		case ADDC:
+			mresultat32=minputL+minputR+(mcondition_reg&0x01);
+			mresultat=mresultat32;
+		break;
+		case CMP:
 		case SUB:
 			mresultat32=minputL-minputR;
+			mresultat=mresultat32;
+		break;
+		case SUBC:
+			mresultat32=minputL-minputR-(mcondition_reg&0x01);
+			mresultat=mresultat32;
+		break;
+		case RSUB:
+			mresultat32=minputR-minputL;
+			mresultat=mresultat32;
+		break;
+		case RSBC:
+			mresultat32=minputR-minputL-(mcondition_reg&0x01);
 			mresultat=mresultat32;
 		break;
 		case INC:
@@ -95,12 +139,15 @@ void ALU::update_state(){
 			mresultat=0;
 		break;
 	}
+	mcondition_reg=0x0;
 	if(mresultat32>>16!=0)
 		mcondition_reg|=0x01;
 	if(mresultat==0)
 		mcondition_reg|=0x02;
 	if((mresultat&0x8000)!=0)
 		mcondition_reg|=0x04;
-	if(mopcode==9&&minputR==0)
+	if((mopcode==UDIV||mopcode==SDIV)&&minputR==0)
 		mcondition_reg|=0x08;
+	if(mopcode==CMP)
+		mresultat=minputL;
 }
