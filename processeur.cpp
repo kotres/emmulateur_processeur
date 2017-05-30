@@ -75,24 +75,29 @@ void Processeur::execute(Programme& prog){
 	switch(typeInstruction){
 		case NOP:
 			std::cout<<"nop"<<std::endl;
+			code_fetched.pop_front();
 		break;
 		case ILLEGAL:
 			std::cout<<"illegal"<<std::endl;
+			code_fetched.pop_front();
 		break;
 		case LOAD:
 			std::cout<<"load"<<std::endl;
+			load();
 		break;
 		case STORE:
 			std::cout<<"store"<<std::endl;
+			code_fetched.pop_front();
 		break;
 		case ALU_OP:
 			std::cout<<"alu operation"<<std::endl;
+			code_fetched.pop_front();
 		break;
 		case JUMP:
 			std::cout<<"jump"<<std::endl;
+			code_fetched.pop_front();
 		break;
 	}
-	code_fetched.pop_front();
 	etat=FETCH;
 }
 
@@ -109,5 +114,34 @@ void Processeur::clock_cycle(Programme& prog){
 		break;
 		default:
 		break;
+	}
+}
+
+
+void Processeur::load(){
+	if (!(code_fetched.front()&0x1000))
+	{
+		switch((code_fetched.front()>>10)&0x3){
+			case 0:
+				code_fetched.pop_front();
+			break;
+			case 1:
+			{
+				unsigned int Rn=code_fetched.front()&0x00ff;
+				code_fetched.pop_front();
+				registres.at(Rn)=code_fetched.front();
+				code_fetched.pop_front();
+				std::cout<<"word "<<std::hex<<registres.at(Rn)<<" loaded to R"<<Rn<<std::endl;
+			}
+			break;
+			case 2:
+			case 3:
+			default:
+				code_fetched.pop_front();
+			break;
+		}
+	}
+	else{
+		code_fetched.pop_front();
 	}
 }

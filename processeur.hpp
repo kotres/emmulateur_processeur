@@ -34,6 +34,7 @@ private:
 	void fetch(Programme& prog);
 	void decode();
 	void execute(Programme& prog);
+	void load();
 public:
 	void clock_cycle(Programme& prog);
 	Processeur();
