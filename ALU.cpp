@@ -81,7 +81,11 @@ void ALU::update_state(){
 			mresultat=(minputL&0x00ff)*(minputR&0x00ff);
 		break;
 		case SMUL:
-			mresultat=((int8_t)(minputL&0x00ff))*((int8_t)(minputR&0x00ff));
+		{
+			int8_t left=minputL;
+			int8_t right=minputR;
+			mresultat=left*right;
+		}
 		break;
 		case UDIV:
 			if (!minputR)
@@ -95,7 +99,9 @@ void ALU::update_state(){
 		case SDIV:
 			if (!minputR)
 			{
-				mresultat=(int16_t)minputL/(int16_t)minputR;
+				int16_t left=minputL;
+				int16_t right=minputR;
+				mresultat=left/right;
 			}
 			else{
 				mresultat=0;
