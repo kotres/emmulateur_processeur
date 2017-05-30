@@ -28,13 +28,12 @@ private:
 	std::list<uint16_t> code_fetched;
 	std::list<Instruction> liste_instructions;
 	InstructionType typeInstruction;
-
 	EtatProcesseur etat;
-	uint16_t buffer;
+
 	void fetch(Programme& prog);
 	void decode();
 	void execute(Programme& prog);
-	void load();
+	void load(Programme prog);
 public:
 	void clock_cycle(Programme& prog);
 	Processeur();
