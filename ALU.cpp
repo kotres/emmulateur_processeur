@@ -1,26 +1,27 @@
 #include "ALU.hpp"
+#include <iostream>
 
-uint16_t& ALU::inputS(){
-	return minputS;
+uint16_t& ALU::inputL(){
+	return minputL;
 }
 
-uint16_t ALU::inputS() const{
-	return minputS;
+uint16_t ALU::inputL() const{
+	return minputL;
 }
 
-uint16_t& ALU::inputD(){
-	return minputD;
+uint16_t& ALU::inputR(){
+	return minputR;
 }
 
-uint16_t ALU::inputD() const{
-	return minputD;
+uint16_t ALU::inputR() const{
+	return minputR;
 }
 
-uint8_t& ALU::opcode(){
+ALU_opcode& ALU::opcode(){
 	return mopcode;
 }
 
-uint8_t ALU::opcode() const{
+ALU_opcode ALU::opcode() const{
 	return mopcode;
 }
 
@@ -32,72 +33,74 @@ uint8_t ALU::condition_reg() const{
 	return mcondition_reg;
 }
 
+uint8_t& ALU::condition_reg(){
+	return mcondition_reg;
+}
+
 void ALU::update_state(){
 	uint32_t mresultat32=0;
 	mresultat=0;
 	switch(mopcode){
-		case 1:
-			mresultat=minputS&minputD;
+		case AND:
+			mresultat=minputL&minputR;
 		break;
-		case 2:
-			mresultat=minputS|minputD;
+		case OR:
+			mresultat=minputL|minputR;
 		break;
-		case 3:
-			mresultat=(minputS^minputD);
+		case XOR:
+			mresultat=(minputL^minputR);
 		break;
-		case 4:
-			mresultat=~minputS;
+		case NOT:
+			mresultat=~minputL;
 		break;
-		case 5:
-			mresultat=-minputS;
+		case TCP:
+			mresultat=-minputL;
 		break;
-		case 6:
-			mresultat=minputS<<minputD;
+		case LLS:
+			mresultat=minputL<<minputR;
 		break;
-		case 7:
-			mresultat=minputS>>minputD;
+		case LRS:
+			mresultat=minputL>>minputR;
 		break;
-		case 8:
-			mresultat=(minputS&0x00ff)*(minputD&0x00ff);
+		case UMUL:
+			mresultat=(minputL&0x00ff)*(minputR&0x00ff);
 		break;
-		case 9:
-			if (minputD!=0)
+		case UDIV:
+			if (!minputR)
 			{
-				mresultat=minputS/minputD;
+				mresultat=minputL/minputR;
 			}
 			else{
 				mresultat=0;
 			}
 		break;
-		case 10:
-			mresultat32=minputS+minputD;
+		case ADD:
+			mresultat32=minputL+minputR;
 			mresultat=mresultat32;
 		break;
-		case 11:
-			mresultat32=minputS-minputD;
+		case SUB:
+			mresultat32=minputL-minputR;
 			mresultat=mresultat32;
 		break;
-		case 12:
-			mresultat32=++minputS;
+		case INC:
+			mresultat32=minputL+1;
 			mresultat=mresultat32;
 		break;
-		case 13:
-			mresultat32=--minputS;
+		case DEC:
+			mresultat32=minputL-1;
 			mresultat=mresultat32;
 		break;
 		default:
+			std::cout<<"illegal alu operation"<<std::endl;
 			mresultat=0;
 		break;
 	}
-	mcondition_reg=0x00;
-	if(mopcode>=10&&mopcode<=13){
-		if(mresultat32>>16!=0)
-			mcondition_reg|=0x01;
-	}
+	if(mresultat32>>16!=0)
+		mcondition_reg|=0x01;
 	if(mresultat==0)
 		mcondition_reg|=0x02;
 	if((mresultat&0x8000)!=0)
 		mcondition_reg|=0x04;
-	if(mopcode==9&&minputD==0)
+	if(mopcode==9&&minputR==0)
 		mcondition_reg|=0x08;
 }
