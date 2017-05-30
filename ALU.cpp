@@ -72,10 +72,24 @@ void ALU::update_state(){
 			mresultat=minputL&(~(0x01<<minputR));
 		break;
 		case LLS:
-			mresultat=minputL<<minputR;
+			mresultat=(minputL<<minputR);
 		break;
 		case LRS:
-			mresultat=minputL>>minputR;
+			mresultat=(minputL>>minputR);
+		break;
+		case RL:
+		{
+			uint16_t right_part=(minputL>>(16-minputR));
+			mresultat=(minputL<<minputR);
+			mresultat+=right_part;
+		}
+		break;
+		case RR:
+		{
+			uint16_t left_part=(minputL<<(16-minputR));
+			mresultat=(minputL>>minputR);
+			mresultat+=left_part;
+		}
 		break;
 		case UMUL:
 			mresultat=(minputL&0x00ff)*(minputR&0x00ff);

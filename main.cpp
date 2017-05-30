@@ -18,9 +18,9 @@ int main(){
 	unsigned int i=0;
 	while(q!='q'){
 		std::cout<<"left"<<std::endl;
-		std::cin>>alu.inputL();
+		std::cin>>std::hex>>alu.inputL();
 		std::cout<<"right"<<std::endl;
-		std::cin>>alu.inputR();
+		std::cin>>std::hex>>alu.inputR();
 		std::cout<<"opcode"<<std::endl;
 		std::cin>>i;
 		alu.opcode()=(ALU_opcode)i;
