@@ -90,8 +90,7 @@ void Processeur::execute(Programme& prog){
 			code_fetched.pop_front();
 		break;
 		case ALU_OP:
-			std::cout<<"alu operation"<<std::endl;
-			code_fetched.pop_front();
+			alu_operation();
 		break;
 		case JUMP:
 			std::cout<<"jump"<<std::endl;
@@ -117,6 +116,30 @@ void Processeur::clock_cycle(Programme& prog){
 	}
 }
 
+void Processeur::alu_operation(){
+	std::cout<<"alu operation"<<std::endl;
+	unsigned int Rs,Rd;
+	Rs=(code_fetched.front()&0xf0)>>4;
+	Rd=(code_fetched.front()&0x0f);
+	alu.inputL()=registres.at(Rs);
+	std::cout<<"Rs: R"<<Rs<<":"<<std::hex<<registres.at(Rs)<<std::endl;
+	ALU_opcode op=(ALU_opcode)((code_fetched.front()&0x1f00)>>8);
+	alu.opcode()=op;
+	std::cout<<"opcode"<<((code_fetched.front()&0x1f00)>>8)<<std::endl;
+	if(!code_fetched.front()&0x2000){
+		alu.inputR()=registres.at(Rd);
+		std::cout<<"inputR: R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<std::endl;
+	}
+	else{
+		code_fetched.pop_front();
+		alu.inputR()=code_fetched.front();
+		std::cout<<"inputR: word "<<std::hex<<code_fetched.front()<<std::endl;
+	}
+	code_fetched.pop_front();
+	alu.update_state();
+	registres.at(Rd)=alu.resultat();
+	std::cout<<"result "<<std::hex<<alu.resultat()<<" stored in R"<<Rd<<std::endl;
+}
 
 void Processeur::load(Programme prog){
 	if (!(code_fetched.front()&0x1000))

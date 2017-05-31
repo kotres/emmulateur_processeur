@@ -79,15 +79,15 @@ void ALU::update_state(){
 		break;
 		case RL:
 		{
-			uint16_t right_part=(minputL>>(16-minputR));
-			mresultat=(minputL<<minputR);
+			uint16_t right_part=(minputL>>(16-minputR%16));
+			mresultat=(minputL<<(minputR%16));
 			mresultat+=right_part;
 		}
 		break;
 		case RR:
 		{
-			uint16_t left_part=(minputL<<(16-minputR));
-			mresultat=(minputL>>minputR);
+			uint16_t left_part=(minputL<<(16-minputR%16));
+			mresultat=(minputL>>minputR%16);
 			mresultat+=left_part;
 		}
 		break;

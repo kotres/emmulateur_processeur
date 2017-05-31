@@ -29,11 +29,11 @@ private:
 	std::list<Instruction> liste_instructions;
 	InstructionType typeInstruction;
 	EtatProcesseur etat;
-
 	void fetch(Programme& prog);
 	void decode();
 	void execute(Programme& prog);
 	void load(Programme prog);
+	void alu_operation();
 public:
 	void clock_cycle(Programme& prog);
 	Processeur();
