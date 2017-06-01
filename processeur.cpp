@@ -94,7 +94,7 @@ void Processeur::execute(Programme& prog){
 		break;
 		case JUMP:
 			std::cout<<"jump"<<std::endl;
-			code_fetched.pop_front();
+			jump();
 		break;
 	}
 	etat=FETCH;
@@ -228,5 +228,32 @@ void Processeur::loadStore(Programme prog){
 			prog(addr)=registres.at(Rd);
 			std::cout<<"R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<" stored to indirect address "<<std::hex<<addr<<std::endl;
 		}
+	}
+}
+
+void Processeur::jump(){
+	switch((code_fetched.front()&0x3c00)>>10){
+		case 0:
+		{
+			switch((code_fetched.front()&0x0300)>>8){
+				case 0:
+				{
+					uint32_t uoff=(code_fetched.front()&0x00ff);
+					if(uoff&0x00000080){
+					uoff|=0xffffff00;
+					}
+					int32_t off=uoff;
+					programm_counter=programm_counter-3+off;
+					code_fetched.clear();
+					std::cout<<"small jump PC="<<std::hex<<programm_counter<<std::endl;
+				}
+				break;
+				default:
+				break;
+			}
+		}
+		break;
+		default:
+		break;
 	}
 }

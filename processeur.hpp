@@ -34,6 +34,7 @@ private:
 	void execute(Programme& prog);
 	void loadStore(Programme prog);
 	void alu_operation();
+	void jump();
 public:
 	void clock_cycle(Programme& prog);
 	Processeur();
