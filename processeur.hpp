@@ -32,7 +32,7 @@ private:
 	void fetch(Programme& prog);
 	void decode();
 	void execute(Programme& prog);
-	void load(Programme prog);
+	void loadStore(Programme prog);
 	void alu_operation();
 public:
 	void clock_cycle(Programme& prog);

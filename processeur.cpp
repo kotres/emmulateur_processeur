@@ -13,8 +13,8 @@ etat(FETCH)
 	liste_instructions.push_back(Instruction(0x1,16,ILLEGAL));
 	liste_instructions.push_back(Instruction(0x3,2,JUMP));
 	liste_instructions.push_back(Instruction(0x2,2,ALU_OP));
-	liste_instructions.push_back(Instruction(0x2,3,LOAD));
-	liste_instructions.push_back(Instruction(0x3,3,STORE));
+	liste_instructions.push_back(Instruction(0x3,3,LOAD));
+	liste_instructions.push_back(Instruction(0x2,3,STORE));
 }
 
 void Processeur::fetch(Programme& prog){
@@ -83,11 +83,11 @@ void Processeur::execute(Programme& prog){
 		break;
 		case LOAD:
 			std::cout<<"load"<<std::endl;
-			load(prog);
+			loadStore(prog);
 		break;
 		case STORE:
 			std::cout<<"store"<<std::endl;
-			code_fetched.pop_front();
+			loadStore(prog);
 		break;
 		case ALU_OP:
 			alu_operation();
@@ -141,7 +141,9 @@ void Processeur::alu_operation(){
 	std::cout<<"result "<<std::hex<<alu.resultat()<<" stored in R"<<Rd<<std::endl;
 }
 
-void Processeur::load(Programme prog){
+void Processeur::loadStore(Programme prog){
+	bool load=(bool)((code_fetched.front()&0x2000)>>13);
+	std::cout<<load<<std::endl;
 	if (!(code_fetched.front()&0x1000))
 	{
 		switch((code_fetched.front()>>10)&0x3){
@@ -158,9 +160,11 @@ void Processeur::load(Programme prog){
 			{
 				unsigned int Rn=code_fetched.front()&0x000f;
 				code_fetched.pop_front();
-				registres.at(Rn)=code_fetched.front();
-				code_fetched.pop_front();
-				std::cout<<"word "<<std::hex<<registres.at(Rn)<<" loaded to R"<<Rn<<std::endl;
+				if(load){
+					registres.at(Rn)=code_fetched.front();
+					code_fetched.pop_front();
+					std::cout<<"word "<<std::hex<<registres.at(Rn)<<" loaded to R"<<Rn<<std::endl;
+				}
 			}
 			break;
 			case 2:
@@ -171,8 +175,14 @@ void Processeur::load(Programme prog){
 				code_fetched.pop_front();
 				addr+=code_fetched.front();
 				code_fetched.pop_front();
-				registres.at(Rn)=prog(addr);
-				std::cout<<"word at address "<<std::hex<<addr<<":"<<std::hex<<prog(addr)<<" loaded to R"<<Rn<<std::endl;
+				if(load){
+					registres.at(Rn)=prog(addr);
+					std::cout<<"word at address "<<std::hex<<addr<<":"<<std::hex<<prog(addr)<<" loaded to R"<<Rn<<std::endl;
+				}
+				else{
+					prog(addr)=registres.at(Rn);
+					std::cout<<"R"<<Rn<<":"<<std::hex<<registres.at(Rn)<<"stored to address"<<std::hex<<addr<<std::endl;
+				}
 			}
 			break;
 			case 3:
@@ -186,9 +196,16 @@ void Processeur::load(Programme prog){
 					uoff|=0xfff00000;
 				}
 				int32_t off=uoff;
-				registres.at(Rn)=prog(programm_counter-3+off);
 				std::cout<<"offset "<<std::hex<<off<<std::endl;
-				std::cout<<"R"<<Rn<<" recieved word from address "<<std::hex<<programm_counter-3+off<<std::endl;
+				if(load){
+					registres.at(Rn)=prog(programm_counter-3+off);
+					std::cout<<"R"<<Rn<<" recieved word from address "<<std::hex<<programm_counter-3+off<<std::endl;
+				}
+				else{
+					prog(programm_counter-3+off)=registres.at(Rn);
+					std::cout<<"R"<<Rn<<":"<<std::hex<<registres.at(Rn)<<" stored to address "<<
+					std::hex<<programm_counter-3+off<<std::endl;
+				}
 			}
 			break;
 			default:
@@ -203,7 +220,13 @@ void Processeur::load(Programme prog){
 		Rd=code_fetched.front()&0x000f;
 		code_fetched.pop_front();
 		uint32_t addr=(registres.at(Rh)<<16)+registres.at(Rl);
-		registres.at(Rd)=prog(addr);
-		std::cout<<"indirect, word at address "<<std::hex<<addr<<":"<<std::hex<<prog(addr)<<" loaded to R"<<Rd<<std::endl;
+		if(load){
+			registres.at(Rd)=prog(addr);
+			std::cout<<"indirect, word at address "<<std::hex<<addr<<":"<<std::hex<<prog(addr)<<" loaded to R"<<Rd<<std::endl;
+		}
+		else{
+			prog(addr)=registres.at(Rd);
+			std::cout<<"R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<" stored to indirect address "<<std::hex<<addr<<std::endl;
+		}
 	}
 }
