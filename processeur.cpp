@@ -9,6 +9,7 @@ Processeur::Processeur()
 :alu(),registres(),programm_counter(0),stack_pointer(0),code_fetched(),liste_instructions(),typeInstruction(NOP),
 etat(FETCH)
 {
+	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL));
 	liste_instructions.push_back(Instruction(0x0,16,NOP));
 	liste_instructions.push_back(Instruction(0x1,16,ILLEGAL));
 	liste_instructions.push_back(Instruction(0x3,2,JUMP));
@@ -56,13 +57,17 @@ void Processeur::fetch(Programme& prog){
 void Processeur::decode(){
 	typeInstruction=ILLEGAL;
 	std::cout<<"decode"<<std::endl;
-	std::list<Instruction>::iterator it;
-	for(it=liste_instructions.begin();it!=liste_instructions.end();it++){
+	std::list<Instruction>::iterator it,it_final;
+	it=liste_instructions.begin();
+	it_final=liste_instructions.begin();
+	for(it=++it;it!=liste_instructions.end();it++){
 		if (it->valIn(code_fetched.front()))
 		{
-			typeInstruction=it->type();
+			if(it->opcode_size()>it_final->opcode_size())
+				it_final=it;
 		}
 	}
+	typeInstruction=it_final->type();
 	std::cout<<"code "<<code_fetched.front()<<std::endl;
 	std::cout<<"instruction "<<typeInstruction<<" trouvé"<<std::endl;
 	etat=EXECUTE;
@@ -140,6 +145,24 @@ void Processeur::alu_operation(){
 	registres.at(Rd)=alu.resultat();
 	std::cout<<"result "<<std::hex<<alu.resultat()<<" stored in R"<<Rd<<std::endl;
 }
+
+/*void Processeur::move_indirect(Programme &prog){
+	bool load=(bool)((code_fetched.front()&0x2000)>>13);
+	unsigned int Rh,Rl,Rd;
+	Rh=(code_fetched.front()&0x0f00)>>8;
+	Rl=(code_fetched.front()&0x00f0)>>4;
+	Rd=code_fetched.front()&0x000f;
+	code_fetched.pop_front();
+	uint32_t addr=(registres.at(Rh)<<16)+registres.at(Rl);
+	if(load){
+		registres.at(Rd)=prog(addr);
+		std::cout<<"indirect, word at address "<<std::hex<<addr<<":"<<std::hex<<prog(addr)<<" loaded to R"<<Rd<<std::endl;
+	}
+	else{
+		prog(addr)=registres.at(Rd);
+		std::cout<<"R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<" stored to indirect address "<<std::hex<<addr<<std::endl;
+	}
+}*/
 
 void Processeur::loadStore(Programme prog){
 	bool load=(bool)((code_fetched.front()&0x2000)>>13);

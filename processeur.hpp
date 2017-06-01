@@ -22,7 +22,7 @@ class Processeur
 {
 private:
 	ALU alu;
-	std::array<uint16_t,16> registres;
+	std::array<uint16_t,128> registres;
 	uint32_t programm_counter;
 	uint32_t stack_pointer;
 	std::list<uint16_t> code_fetched;

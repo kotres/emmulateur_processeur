@@ -15,3 +15,7 @@ uint16_t Instruction::opcode() const{
 InstructionType Instruction::type() const{
 	return mtype;
 }
+
+uint16_t Instruction::opcode_size() const{
+	return mopcode_size;
+}

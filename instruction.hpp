@@ -43,6 +43,7 @@ public:
 	bool valIn(uint16_t val) const;
 	uint16_t opcode() const;
 	InstructionType type() const;
+	uint16_t opcode_size() const;
 };
 
 #endif
