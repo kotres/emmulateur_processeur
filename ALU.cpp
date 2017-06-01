@@ -84,12 +84,30 @@ void ALU::update_state(){
 			mresultat+=right_part;
 		}
 		break;
+		case RLC:
+		{
+			uint64_t iL_with_carry=minputL+((mcondition_reg&0x01)<<16);
+			iL_with_carry=(iL_with_carry<<(minputR%17));
+			mresultat=iL_with_carry+(iL_with_carry>>17);
+			mcondition_reg&=0xfe;
+			mcondition_reg+=((iL_with_carry>>16)&0x01);
+		}
+		break;
 		case RR:
 		{
 			uint16_t left_part=(minputL<<(16-minputR%16));
 			mresultat=(minputL>>minputR%16);
 			mresultat+=left_part;
 		}
+		break;
+		// case RRC:
+		// {
+		// 	uint64_t iL_with_carry=minputL<<48+((mcondition_reg&0x01)<<47);
+		// 	iL_with_carry=(iL_with_carry>>(minputR%17));
+		// 	mresultat=(iL_with_carry>>48)+(iL_with_carry>>17);
+		// 	mcondition_reg&=0xfe;
+		// 	mcondition_reg+=((iL_with_carry>>16)&0x01);
+		// }
 		break;
 		case UMUL:
 			mresultat=(minputL&0x00ff)*(minputR&0x00ff);
@@ -159,12 +177,11 @@ void ALU::update_state(){
 			mresultat=0;
 		break;
 	}
-	mcondition_reg=0x0;
 	if(mresultat32>>16!=0)
 		mcondition_reg|=0x01;
 	if(mresultat==0)
 		mcondition_reg|=0x02;
-	if((mresultat&0x8000)!=0)
+	if(mresultat&0x8000)
 		mcondition_reg|=0x04;
 	if((mopcode==UDIV||mopcode==SDIV)&&minputR==0)
 		mcondition_reg|=0x08;
