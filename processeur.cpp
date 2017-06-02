@@ -79,7 +79,10 @@ void Processeur::decode(){
 	instruction=*it_final;
 	std::cout<<"code "<<code_fetched.front()<<std::endl;
 	std::cout<<"instruction "<<instruction.type()<<" trouvé"<<std::endl;
-	etat=FETCH_PARAMETERS;
+	if(instruction.size()==1)
+		etat=EXECUTE;
+	else
+		etat=FETCH_PARAMETERS;
 }
 
 void Processeur::fetch_parameters(Programme& prog){
