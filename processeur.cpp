@@ -6,7 +6,7 @@
 #define THREE_WORD_MIN 0x7c01
 
 Processeur::Processeur()
-:alu(),registres(),programm_counter(0),fetch_address(0),stack_pointer(0),code_fetched(),liste_instructions(),typeInstruction(NOP),
+:alu(),registres(),programm_counter(0),fetch_address(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(0x0,0,ILLEGAL,1),
 etat(FETCH)
 {
 	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL,1));
@@ -27,6 +27,7 @@ etat(FETCH)
 	liste_instructions.push_back(Instruction(0x41,8,MOVE_IMMEDIATE_ADDESS,3));
 	liste_instructions.push_back(Instruction(0x81,9,MOVE_WORD_IMMEDIATE,2));
 }
+
 
 void Processeur::fetch(Programme& prog){
 	std::cout<<"fetch at address "<<std::hex<<fetch_address<<std::endl;
@@ -51,22 +52,19 @@ void Processeur::fetch(Programme& prog){
 
 	}
 	else{
-		if (code_fetched.size()<4)
+		if (code_fetched.size()==0)
 		{
 			code_fetched.push_back(prog(fetch_address));
 			std::cout<<std::hex<<code_fetched.back()<<std::endl;
 			++fetch_address;
-		}
-		if (code_fetched.size()>=4){
 			etat=DECODE;
 		}
-		
 	}
 }
 
 
 void Processeur::decode(){
-	typeInstruction=ILLEGAL;
+	instruction=liste_instructions.front();
 	std::cout<<"decode"<<std::endl;
 	std::list<Instruction>::iterator it,it_final;
 	it=liste_instructions.begin();
@@ -78,15 +76,27 @@ void Processeur::decode(){
 				it_final=it;
 		}
 	}
-	typeInstruction=it_final->type();
+	instruction=*it_final;
 	std::cout<<"code "<<code_fetched.front()<<std::endl;
-	std::cout<<"instruction "<<typeInstruction<<" trouvé"<<std::endl;
-	etat=EXECUTE;
+	std::cout<<"instruction "<<instruction.type()<<" trouvé"<<std::endl;
+	etat=FETCH_PARAMETERS;
+}
+
+void Processeur::fetch_parameters(Programme& prog){
+	std::cout<<"fetch parameters"<<std::endl;
+	if(code_fetched.size()<instruction.size()){
+		code_fetched.push_back(prog(fetch_address));
+		fetch_address++;
+		std::cout<<std::hex<<fetch_address-1<<":"<<std::hex<<code_fetched.back()<<std::endl;
+	}
+	if(code_fetched.size()>=instruction.size()){
+		etat=EXECUTE;
+	}
 }
 
 void Processeur::execute(Programme& prog){
 	std::cout<<"execute"<<std::endl;
-	switch(typeInstruction){
+	switch(instruction.type()){
 		case NOP:
 			std::cout<<"nop"<<std::endl;
 			code_fetched.pop_front();
@@ -152,6 +162,9 @@ void Processeur::clock_cycle(Programme& prog){
 		break;
 		case DECODE:
 			decode();
+		break;
+		case FETCH_PARAMETERS:
+			fetch_parameters(prog);
 		break;
 		case EXECUTE:
 			execute(prog);

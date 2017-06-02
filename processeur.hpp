@@ -15,6 +15,7 @@ class Instruction;
 enum EtatProcesseur{
 	FETCH,
 	DECODE,
+	FETCH_PARAMETERS,
 	EXECUTE
 };
 
@@ -28,10 +29,11 @@ private:
 	uint32_t stack_pointer;
 	std::list<uint16_t> code_fetched;
 	std::list<Instruction> liste_instructions;
-	InstructionType typeInstruction;
+	Instruction instruction;
 	EtatProcesseur etat;
 	void fetch(Programme& prog);
 	void decode();
+	void fetch_parameters(Programme& prog);
 	void execute(Programme& prog);
 	void alu_operation();
 	void alu_operation_word();
