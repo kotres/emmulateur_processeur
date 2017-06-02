@@ -12,7 +12,11 @@ etat(FETCH)
 	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL));
 	liste_instructions.push_back(Instruction(0x0,16,NOP));
 	liste_instructions.push_back(Instruction(0x1,16,ILLEGAL));
-	liste_instructions.push_back(Instruction(0x3,2,JUMP));
+	liste_instructions.push_back(Instruction(0xc000,16,JUMP));
+	liste_instructions.push_back(Instruction(0x7,3,JUMP_OFFSET));
+	liste_instructions.push_back(Instruction(0xd,4,JUMP_COMPARE_OFFSET));
+	liste_instructions.push_back(Instruction(0x19,5,JUMP_COMPARE));
+	liste_instructions.push_back(Instruction(0x19,5,JUMP_COMPARE_IMMEDIATE_WORD));
 	liste_instructions.push_back(Instruction(0x2,2,ALU_OP));
 	liste_instructions.push_back(Instruction(0x1,2,MOVE));
 }
@@ -96,8 +100,21 @@ void Processeur::execute(Programme& prog){
 			alu_operation();
 		break;
 		case JUMP:
-			std::cout<<"jump"<<std::endl;
 			jump();
+		break;
+		case JUMP_OFFSET:
+			std::cout<<"jump offset"<<std::endl;
+			jump_offset();
+		break;
+		case JUMP_COMPARE_OFFSET:
+			jump_compare_offset();
+		break;
+		case JUMP_COMPARE:
+			jump_offset();
+		case JUMP_COMPARE_IMMEDIATE_WORD:
+			jump_compare_immediate_word();
+		break;
+		default:
 		break;
 	}
 	etat=FETCH;
@@ -443,16 +460,12 @@ bool Processeur::jump_compare_operation(uint8_t condition,uint16_t operandA,uint
 
 
 void Processeur::jump(){
-	if(((code_fetched.front()>>13)&0x01)){
-		jump_offset();
-	}
-	else if(((code_fetched.front()>>12)&0x01)){
-		jump_compare_offset();
-	}
-	else if(((code_fetched.front()>>11)&0x01)){
-		jump_compare();
-	}
-	else if(((code_fetched.front()>>10)&0x01)){
-		jump_compare_immediate_word();
-	}
+	code_fetched.pop_front();
+	uint32_t address=code_fetched.front()<<16;
+	code_fetched.pop_front();
+	address+= code_fetched.front();
+	code_fetched.clear();
+	programm_counter=address;
+	fetch_address=programm_counter;
+	std::cout<<"unconditional jump to address "<<std::hex<<address<<std::endl;
 }
