@@ -33,7 +33,6 @@ private:
 	void fetch(Programme& prog);
 	void decode();
 	void execute(Programme& prog);
-	void loadStore(Programme& prog);
 	void alu_operation();
 	void jump();
 	void jump_offset();
@@ -41,12 +40,12 @@ private:
 	void jump_compare_offset();
 	void jump_compare();
 	void jump_compare_immediate_word();
-	void move_indirect(Programme &prog, bool load);
-	void move_immediate(bool load);
-	void move_Rn_offset(Programme &prog, bool load);
-	void move_immediate_offset(Programme &prog, bool load);
-	void move_Rn_address(Programme &prog, bool load);
-	void move_immediate_address(Programme &prog, bool load);
+	void move_indirect(Programme &prog);
+	void move_immediate();
+	void move_Rn_offset(Programme &prog);
+	void move_immediate_offset(Programme &prog);
+	void move_Rn_address(Programme &prog);
+	void move_immediate_address(Programme &prog);
 	void move_word_immediate();
 public:
 	void clock_cycle(Programme& prog);
