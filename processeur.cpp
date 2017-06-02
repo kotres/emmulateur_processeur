@@ -6,7 +6,7 @@
 #define THREE_WORD_MIN 0x7c01
 
 Processeur::Processeur()
-:alu(),registres(),programm_counter(0),stack_pointer(0),code_fetched(),liste_instructions(),typeInstruction(NOP),
+:alu(),registres(),programm_counter(0),fetch_address(0),stack_pointer(0),code_fetched(),liste_instructions(),typeInstruction(NOP),
 etat(FETCH)
 {
 	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL));
@@ -18,16 +18,16 @@ etat(FETCH)
 }
 
 void Processeur::fetch(Programme& prog){
-	std::cout<<"fetch PC "<<std::hex<<programm_counter<<std::endl;
-	if (programm_counter<=0xff)
+	std::cout<<"fetch at address "<<std::hex<<programm_counter+code_fetched.size()<<std::endl;
+	if (fetch_address<=0xff)
 	{
 		if (code_fetched.size()==0)
 		{
 			std::cout<<"interrupt "<<programm_counter/2<<" happened"<<std::endl;
 		}
 		if(code_fetched.size()<2){
-			code_fetched.push_back(prog(programm_counter));
-			programm_counter++;
+			code_fetched.push_back(prog(fetch_address));
+			fetch_address++;
 		}
 		else{
 			programm_counter=code_fetched.front()<<16;
@@ -35,15 +35,16 @@ void Processeur::fetch(Programme& prog){
 			programm_counter+=code_fetched.front();
 			code_fetched.clear();
 			std::cout<<"new programm counter: "<<std::hex<<programm_counter<<std::endl;
+			fetch_address=programm_counter;
 		}
 
 	}
 	else{
 		if (code_fetched.size()<3)
 		{
-			code_fetched.push_back(prog(programm_counter));
+			code_fetched.push_back(prog(fetch_address));
 			std::cout<<std::hex<<code_fetched.back()<<std::endl;
-			programm_counter++;
+			++fetch_address;
 		}
 		if (code_fetched.size()>=3){
 			etat=DECODE;
@@ -80,10 +81,12 @@ void Processeur::execute(Programme& prog){
 		case NOP:
 			std::cout<<"nop"<<std::endl;
 			code_fetched.pop_front();
+			++programm_counter;
 		break;
 		case ILLEGAL:
 			std::cout<<"illegal"<<std::endl;
 			code_fetched.pop_front();
+			++programm_counter;
 		break;
 		case MOVE:
 			std::cout<<"move"<<std::endl;
@@ -95,6 +98,7 @@ void Processeur::execute(Programme& prog){
 		case JUMP:
 			std::cout<<"jump"<<std::endl;
 			jump();
+			++programm_counter;
 		break;
 	}
 	etat=FETCH;
@@ -134,11 +138,13 @@ void Processeur::alu_operation(){
 		code_fetched.pop_front();
 		alu.inputR()=code_fetched.front();
 		std::cout<<"inputR: word "<<std::hex<<code_fetched.front()<<std::endl;
+		++programm_counter;
 	}
 	code_fetched.pop_front();
 	alu.update_state();
 	registres.at(Rd)=alu.resultat();
 	std::cout<<"result "<<std::hex<<alu.resultat()<<" stored in R"<<Rd<<std::endl;
+	++programm_counter;
 }
 
 void Processeur::move_indirect(Programme &prog, bool load){
@@ -156,6 +162,7 @@ void Processeur::move_indirect(Programme &prog, bool load){
 		prog(addr)=registres.at(Rd);
 		std::cout<<"R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<" stored to indirect address "<<std::hex<<addr<<std::endl;
 	}
+	++programm_counter;
 }
 
 void Processeur::move_immediate(bool load){
@@ -171,6 +178,7 @@ void Processeur::move_immediate(bool load){
 		registres.at(im)=registres.at(Rn);
 		std::cout<<"R"<<Rn<<":"<<std::hex<<registres.at(Rn)<<" stored to im "<<std::hex<<im<<std::endl;
 	}
+	++programm_counter;
 }
 
 void Processeur::move_Rn_offset(Programme &prog, bool load){
@@ -185,16 +193,19 @@ void Processeur::move_Rn_offset(Programme &prog, bool load){
 	int32_t off=uoff;
 	std::cout<<"offset "<<std::hex<<off<<std::endl;
 	if(load){
-		registres.at(Rn)=prog(programm_counter-3+off);
+		registres.at(Rn)=prog(programm_counter+off);
 		std::cout<<"word at address "<<std::hex<<programm_counter-3+off
-		<<":"<<std::hex<<prog(programm_counter-3+off)<<" loaded to R"<<Rn<<std::endl;
+		<<":"<<std::hex<<prog(programm_counter+off)<<" loaded to R"<<Rn<<std::endl;
 	}
 	else{
-		prog(programm_counter-3+off)=registres.at(Rn);
+		prog(programm_counter+off)=registres.at(Rn);
 		std::cout<<"R"<<Rn<<":"<<std::hex<<registres.at(Rn)
 		<<"stored to address"<<std::hex<<programm_counter-3+off<<std::endl;
+		if(off==1){
+			code_fetched.front()=registres.at(Rn);
+		}
 	}
-
+	programm_counter+=2;
 }
 
 void Processeur::move_immediate_offset(Programme &prog, bool load){
@@ -209,16 +220,19 @@ void Processeur::move_immediate_offset(Programme &prog, bool load){
 	int32_t off=uoff;
 	std::cout<<"offset "<<std::hex<<off<<std::endl;
 	if(load){
-		registres.at(imm)=prog(programm_counter-3+off);
-		std::cout<<"word at address "<<std::hex<<programm_counter-3+off<<
-		":"<<std::hex<<prog(programm_counter-3+off)<<" loaded to immediate "<<std::hex<<imm<<std::endl;
+		registres.at(imm)=prog(programm_counter+off);
+		std::cout<<"word at address "<<std::hex<<programm_counter+off<<
+		":"<<std::hex<<prog(programm_counter+off)<<" loaded to immediate "<<std::hex<<imm<<std::endl;
 	}
 	else{
-		prog(programm_counter-3+off)=registres.at(imm);
+		prog(programm_counter+off)=registres.at(imm);
 		std::cout<<"immediate"<<std::hex<<imm<<":"<<std::hex<<registres.at(imm)<<" stored to address "
-		<<std::hex<<programm_counter-3+off<<std::endl;
+		<<std::hex<<programm_counter+off<<std::endl;
+		if(off==1){
+			code_fetched.front()=registres.at(imm);
+		}
 	}
-
+	programm_counter+=2;
 }
 
 void Processeur::move_Rn_address(Programme &prog, bool load){
@@ -237,6 +251,7 @@ void Processeur::move_Rn_address(Programme &prog, bool load){
 		std::cout<<"register R"<<Rn<<":"<<std::hex<<registres.at(Rn)<<" stored to address "<<
 		std::hex<<address<<std::endl;
 	}
+	programm_counter+=2;
 }
 
 void Processeur::move_immediate_address(Programme &prog, bool load){
@@ -256,6 +271,7 @@ void Processeur::move_immediate_address(Programme &prog, bool load){
 		std::cout<<"immediate "<<im<<":"<<std::hex<<registres.at(im)<<" stored to address "<<
 		std::hex<<address<<std::endl;
 	}
+	programm_counter+=3;
 }
 
 void Processeur::move_word_immediate(){
@@ -265,6 +281,7 @@ void Processeur::move_word_immediate(){
 	code_fetched.pop_front();
 	registres.at(im)=word;
 	std::cout<<"word "<<std::hex<<word<<" loaded to immediate "<<std::hex<<im<<std::endl;
+	programm_counter+=2;
 }
 
 void Processeur::loadStore(Programme &prog){
@@ -293,6 +310,7 @@ void Processeur::loadStore(Programme &prog){
 	else{
 		std::cout<<"move function failed"<<std::endl;
 		code_fetched.pop_front();
+		programm_counter++;
 	}
 }
 
@@ -308,7 +326,7 @@ void Processeur::jump(){
 					uoff|=0xffffff00;
 					}
 					int32_t off=uoff;
-					programm_counter=programm_counter-3+off;
+					programm_counter=programm_counter+off;
 					code_fetched.clear();
 					std::cout<<"small jump PC="<<std::hex<<programm_counter<<std::endl;
 				}
