@@ -32,9 +32,16 @@ private:
 	void fetch(Programme& prog);
 	void decode();
 	void execute(Programme& prog);
-	void loadStore(Programme prog);
+	void loadStore(Programme& prog);
 	void alu_operation();
 	void jump();
+	void move_indirect(Programme &prog, bool load);
+	void move_immediate(bool load);
+	void move_Rn_offset(Programme &prog, bool load);
+	void move_immediate_offset(Programme &prog, bool load);
+	void move_Rn_address(Programme &prog, bool load);
+	void move_immediate_address(Programme &prog, bool load);
+	void move_word_immediate();
 public:
 	void clock_cycle(Programme& prog);
 	Processeur();

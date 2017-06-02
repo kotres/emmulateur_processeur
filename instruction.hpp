@@ -27,9 +27,9 @@ enum InstructionType{
 	ILLEGAL,
 	JUMP,
 	ALU_OP,
-	LOAD,
-	STORE,
+	MOVE
 };
+
 
 class Instruction
 {

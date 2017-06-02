@@ -14,8 +14,7 @@ etat(FETCH)
 	liste_instructions.push_back(Instruction(0x1,16,ILLEGAL));
 	liste_instructions.push_back(Instruction(0x3,2,JUMP));
 	liste_instructions.push_back(Instruction(0x2,2,ALU_OP));
-	liste_instructions.push_back(Instruction(0x3,3,LOAD));
-	liste_instructions.push_back(Instruction(0x2,3,STORE));
+	liste_instructions.push_back(Instruction(0x1,2,MOVE));
 }
 
 void Processeur::fetch(Programme& prog){
@@ -86,12 +85,8 @@ void Processeur::execute(Programme& prog){
 			std::cout<<"illegal"<<std::endl;
 			code_fetched.pop_front();
 		break;
-		case LOAD:
-			std::cout<<"load"<<std::endl;
-			loadStore(prog);
-		break;
-		case STORE:
-			std::cout<<"store"<<std::endl;
+		case MOVE:
+			std::cout<<"move"<<std::endl;
 			loadStore(prog);
 		break;
 		case ALU_OP:
@@ -146,8 +141,7 @@ void Processeur::alu_operation(){
 	std::cout<<"result "<<std::hex<<alu.resultat()<<" stored in R"<<Rd<<std::endl;
 }
 
-/*void Processeur::move_indirect(Programme &prog){
-	bool load=(bool)((code_fetched.front()&0x2000)>>13);
+void Processeur::move_indirect(Programme &prog, bool load){
 	unsigned int Rh,Rl,Rd;
 	Rh=(code_fetched.front()&0x0f00)>>8;
 	Rl=(code_fetched.front()&0x00f0)>>4;
@@ -162,95 +156,143 @@ void Processeur::alu_operation(){
 		prog(addr)=registres.at(Rd);
 		std::cout<<"R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<" stored to indirect address "<<std::hex<<addr<<std::endl;
 	}
-}*/
+}
 
-void Processeur::loadStore(Programme prog){
-	bool load=(bool)((code_fetched.front()&0x2000)>>13);
-	std::cout<<load<<std::endl;
-	if (!(code_fetched.front()&0x1000))
-	{
-		switch((code_fetched.front()>>10)&0x3){
-			case 0:
-			{
-				unsigned int Rs=(code_fetched.front()&0x00f0)>>4;
-				unsigned int Rd=code_fetched.front()&0x000f;
-				registres.at(Rd)=registres.at(Rs);
-				code_fetched.pop_front();
-				std::cout<<"R"<<Rs<<":"<<registres.at(Rs)<<" loaded to R"<<Rd<<std::endl;
-			}
-			break;
-			case 1:
-			{
-				unsigned int Rn=code_fetched.front()&0x000f;
-				code_fetched.pop_front();
-				if(load){
-					registres.at(Rn)=code_fetched.front();
-					code_fetched.pop_front();
-					std::cout<<"word "<<std::hex<<registres.at(Rn)<<" loaded to R"<<Rn<<std::endl;
-				}
-			}
-			break;
-			case 2:
-			{
-				unsigned int Rn=code_fetched.front()&0x000f;
-				code_fetched.pop_front();
-				uint32_t addr=code_fetched.front()<<16;
-				code_fetched.pop_front();
-				addr+=code_fetched.front();
-				code_fetched.pop_front();
-				if(load){
-					registres.at(Rn)=prog(addr);
-					std::cout<<"word at address "<<std::hex<<addr<<":"<<std::hex<<prog(addr)<<" loaded to R"<<Rn<<std::endl;
-				}
-				else{
-					prog(addr)=registres.at(Rn);
-					std::cout<<"R"<<Rn<<":"<<std::hex<<registres.at(Rn)<<"stored to address"<<std::hex<<addr<<std::endl;
-				}
-			}
-			break;
-			case 3:
-			{
-				unsigned int Rn=(code_fetched.front()&0x00f0)>>4;
-				uint32_t uoff=(code_fetched.front()&0x000f)<<16;
-				code_fetched.pop_front();
-				uoff+=code_fetched.front();
-				code_fetched.pop_front();
-				if(uoff&0x00080000){
-					uoff|=0xfff00000;
-				}
-				int32_t off=uoff;
-				std::cout<<"offset "<<std::hex<<off<<std::endl;
-				if(load){
-					registres.at(Rn)=prog(programm_counter-3+off);
-					std::cout<<"R"<<Rn<<" recieved word from address "<<std::hex<<programm_counter-3+off<<std::endl;
-				}
-				else{
-					prog(programm_counter-3+off)=registres.at(Rn);
-					std::cout<<"R"<<Rn<<":"<<std::hex<<registres.at(Rn)<<" stored to address "<<
-					std::hex<<programm_counter-3+off<<std::endl;
-				}
-			}
-			break;
-			default:
-				code_fetched.pop_front();
-			break;
-		}
+void Processeur::move_immediate(bool load){
+	unsigned int Rn,im;
+	im=(code_fetched.front()>>4)&0x3f;
+	Rn=code_fetched.front()&0x0f;
+	code_fetched.pop_front();
+	if(load){
+		registres.at(Rn)=registres.at(im);
+		std::cout<<"word at immediate "<<std::hex<<im<<":"<<std::hex<<registres.at(im)<<" loaded to R"<<Rn<<std::endl;
 	}
 	else{
-		unsigned int Rh,Rl,Rd;
-		Rh=(code_fetched.front()&0x0f00)>>8;
-		Rl=(code_fetched.front()&0x00f0)>>4;
-		Rd=code_fetched.front()&0x000f;
+		registres.at(im)=registres.at(Rn);
+		std::cout<<"R"<<Rn<<":"<<std::hex<<registres.at(Rn)<<" stored to im "<<std::hex<<im<<std::endl;
+	}
+}
+
+void Processeur::move_Rn_offset(Programme &prog, bool load){
+	unsigned int Rn=(code_fetched.front()>>6)&0x0f;
+	uint32_t uoff=(code_fetched.front()&0x003f)<<16;
+	code_fetched.pop_front();
+	uoff+=code_fetched.front();
+	code_fetched.pop_front();
+	if(uoff&0x00200000){
+		uoff|=0xffc00000;
+	}
+	int32_t off=uoff;
+	std::cout<<"offset "<<std::hex<<off<<std::endl;
+	if(load){
+		registres.at(Rn)=prog(programm_counter-3+off);
+		std::cout<<"word at address "<<std::hex<<programm_counter-3+off
+		<<":"<<std::hex<<prog(programm_counter-3+off)<<" loaded to R"<<Rn<<std::endl;
+	}
+	else{
+		prog(programm_counter-3+off)=registres.at(Rn);
+		std::cout<<"R"<<Rn<<":"<<std::hex<<registres.at(Rn)
+		<<"stored to address"<<std::hex<<programm_counter-3+off<<std::endl;
+	}
+
+}
+
+void Processeur::move_immediate_offset(Programme &prog, bool load){
+	unsigned int imm=(code_fetched.front()>>6)&0x3f;
+	uint32_t uoff=(code_fetched.front()&0x0003)<<16;
+	code_fetched.pop_front();
+	uoff+=code_fetched.front();
+	code_fetched.pop_front();
+	if(uoff&0x00020000){
+		uoff|=0xfffc0000;
+	}
+	int32_t off=uoff;
+	std::cout<<"offset "<<std::hex<<off<<std::endl;
+	if(load){
+		registres.at(imm)=prog(programm_counter-3+off);
+		std::cout<<"word at address "<<std::hex<<programm_counter-3+off<<
+		":"<<std::hex<<prog(programm_counter-3+off)<<" loaded to immediate "<<std::hex<<imm<<std::endl;
+	}
+	else{
+		prog(programm_counter-3+off)=registres.at(imm);
+		std::cout<<"immediate"<<std::hex<<imm<<":"<<std::hex<<registres.at(imm)<<" stored to address "
+		<<std::hex<<programm_counter-3+off<<std::endl;
+	}
+
+}
+
+void Processeur::move_Rn_address(Programme &prog, bool load){
+	unsigned int Rn=(code_fetched.front()>>4)&0x0f;
+	uint32_t address=(code_fetched.front()&0x0f)<<16;
+	code_fetched.pop_front();
+	address+=code_fetched.front();
+	code_fetched.pop_front();
+	if(load){
+		registres.at(Rn)=prog(address);
+		std::cout<<"word at address"<<std::hex<<address<<":"<<std::hex<<prog(address)<<
+		" loaded to register R"<<Rn<<std::endl;
+	}
+	else{
+		prog(address)=registres.at(Rn);
+		std::cout<<"register R"<<Rn<<":"<<std::hex<<registres.at(Rn)<<" stored to address "<<
+		std::hex<<address<<std::endl;
+	}
+}
+
+void Processeur::move_immediate_address(Programme &prog, bool load){
+	unsigned int im=code_fetched.front()&0x3f;
+	code_fetched.pop_front();
+	uint32_t address=code_fetched.front()<<16;
+	code_fetched.pop_front();
+	address+=code_fetched.front();
+	code_fetched.pop_front();
+	if(load){
+		registres.at(im)=prog(address);
+		std::cout<<"word at address"<<std::hex<<address<<":"<<std::hex<<prog(address)<<
+		" loaded to immediate "<<im<<std::endl;
+	}
+	else{
+		prog(address)=registres.at(im);
+		std::cout<<"immediate "<<im<<":"<<std::hex<<registres.at(im)<<" stored to address "<<
+		std::hex<<address<<std::endl;
+	}
+}
+
+void Processeur::move_word_immediate(){
+	unsigned int im=code_fetched.front()&0x3f;
+	code_fetched.pop_front();
+	uint16_t word=code_fetched.front();
+	code_fetched.pop_front();
+	registres.at(im)=word;
+	std::cout<<"word "<<std::hex<<word<<" loaded to immediate "<<std::hex<<im<<std::endl;
+}
+
+void Processeur::loadStore(Programme &prog){
+	bool load=(bool)((code_fetched.front()>>13)&0x01);
+	if((code_fetched.front()>>12)&0x01){
+		move_indirect(prog,load);
+	}
+	else if((code_fetched.front()>>11)&0x01){
+		move_immediate(load);
+	}
+	else if((code_fetched.front()>>10)&0x01){
+		move_Rn_offset(prog,load);
+	}
+	else if((code_fetched.front()>>9)&0x01){
+		move_immediate_offset(prog,load);
+	}
+	else if((code_fetched.front()>>8)&0x01){
+		move_Rn_address(prog,load);
+	}
+	else if((code_fetched.front()>>7)&0x01){
+		move_immediate_address(prog,load);
+	}
+	else if((code_fetched.front()&0xdfff)<0x4080){
+		move_word_immediate();
+	}
+	else{
+		std::cout<<"move function failed"<<std::endl;
 		code_fetched.pop_front();
-		uint32_t addr=(registres.at(Rh)<<16)+registres.at(Rl);
-		if(load){
-			registres.at(Rd)=prog(addr);
-			std::cout<<"indirect, word at address "<<std::hex<<addr<<":"<<std::hex<<prog(addr)<<" loaded to R"<<Rd<<std::endl;
-		}
-		else{
-			prog(addr)=registres.at(Rd);
-			std::cout<<"R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<" stored to indirect address "<<std::hex<<addr<<std::endl;
-		}
 	}
 }
 
