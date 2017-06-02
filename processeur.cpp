@@ -40,13 +40,13 @@ void Processeur::fetch(Programme& prog){
 
 	}
 	else{
-		if (code_fetched.size()<3)
+		if (code_fetched.size()<4)
 		{
 			code_fetched.push_back(prog(fetch_address));
 			std::cout<<std::hex<<code_fetched.back()<<std::endl;
 			++fetch_address;
 		}
-		if (code_fetched.size()>=3){
+		if (code_fetched.size()>=4){
 			etat=DECODE;
 		}
 		
@@ -344,7 +344,7 @@ void Processeur::jump_compare_offset(){
 	std::cout<<"compare "<<(int)op<<std::endl;
 
 
-	if(!jump_compare_operation(op,registres.at(Ra),registres.at(Rb))){
+	if(jump_compare_operation(op,registres.at(Ra),registres.at(Rb))){
 		programm_counter+=off;
 		fetch_address=programm_counter;
 		std::cout<<"jump occured, offset "<<std::hex<<off<<"\nnew PC "<<std::hex<<programm_counter<<std::endl;
@@ -352,6 +352,60 @@ void Processeur::jump_compare_offset(){
 	}
 	else{
 		programm_counter+=2;
+		std::cout<<"no jump occured"<<std::endl;
+	}
+}
+
+void Processeur::jump_compare(){
+	uint8_t op=(code_fetched.front()>>8)&0x03;
+	unsigned int Ra=(code_fetched.front()>>4)&0x0f;
+	unsigned int Rb=(code_fetched.front()&0x0f);
+	code_fetched.pop_front();
+	uint32_t address=code_fetched.front()<<16;
+	code_fetched.pop_front();
+	address+=code_fetched.front();
+	code_fetched.pop_front();
+
+	std::cout<<"R"<<Ra<<":"<<std::hex<<registres.at(Ra)
+	<<" compared to R"<<Rb<<":"<<std::hex<<registres.at(Rb)<<std::endl;
+	std::cout<<"compare "<<(int)op<<std::endl;
+
+
+	if(jump_compare_operation(op,registres.at(Ra),registres.at(Rb))){
+		programm_counter=address;
+		fetch_address=programm_counter;
+		std::cout<<"jump occured, address "<<std::hex<<address<<"\nnew PC "<<std::hex<<programm_counter<<std::endl;
+		code_fetched.clear();
+	}
+	else{
+		programm_counter+=3;
+		std::cout<<"no jump occured"<<std::endl;
+	}
+}
+
+void Processeur::jump_compare_immediate_word(){
+	uint8_t op=(code_fetched.front()>>7)&0x03;
+	unsigned int im=(code_fetched.front()&0x03f);
+	code_fetched.pop_front();
+	uint32_t address=code_fetched.front()<<16;
+	code_fetched.pop_front();
+	address+=code_fetched.front();
+	code_fetched.pop_front();
+	uint16_t word=code_fetched.front();
+	code_fetched.pop_front();
+
+	std::cout<<"immediate "<<im<<":"<<std::hex<<registres.at(im)
+	<<" compared to word "<<std::hex<<word<<std::endl;
+	std::cout<<"compare "<<(int)op<<std::endl;
+
+	if(jump_compare_operation(op,registres.at(im),word)){
+		programm_counter=address;
+		fetch_address=programm_counter;
+		std::cout<<"jump occured, address "<<std::hex<<address<<"\nnew PC "<<std::hex<<programm_counter<<std::endl;
+		code_fetched.clear();
+	}
+	else{
+		programm_counter+=4;
 		std::cout<<"no jump occured"<<std::endl;
 	}
 }
@@ -387,11 +441,18 @@ bool Processeur::jump_compare_operation(uint8_t condition,uint16_t operandA,uint
 	return ret;
 }
 
+
 void Processeur::jump(){
 	if(((code_fetched.front()>>13)&0x01)){
 		jump_offset();
 	}
 	else if(((code_fetched.front()>>12)&0x01)){
 		jump_compare_offset();
+	}
+	else if(((code_fetched.front()>>11)&0x01)){
+		jump_compare();
+	}
+	else if(((code_fetched.front()>>10)&0x01)){
+		jump_compare_immediate_word();
 	}
 }

@@ -39,6 +39,8 @@ private:
 	void jump_offset();
 	bool jump_compare_operation(uint8_t condition,uint16_t operandA,uint16_t operandB);
 	void jump_compare_offset();
+	void jump_compare();
+	void jump_compare_immediate_word();
 	void move_indirect(Programme &prog, bool load);
 	void move_immediate(bool load);
 	void move_Rn_offset(Programme &prog, bool load);
