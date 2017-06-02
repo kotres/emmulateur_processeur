@@ -18,7 +18,7 @@ etat(FETCH)
 }
 
 void Processeur::fetch(Programme& prog){
-	std::cout<<"fetch at address "<<std::hex<<programm_counter+code_fetched.size()<<std::endl;
+	std::cout<<"fetch at address "<<std::hex<<fetch_address<<std::endl;
 	if (fetch_address<=0xff)
 	{
 		if (code_fetched.size()==0)
@@ -98,7 +98,6 @@ void Processeur::execute(Programme& prog){
 		case JUMP:
 			std::cout<<"jump"<<std::endl;
 			jump();
-			++programm_counter;
 		break;
 	}
 	etat=FETCH;
@@ -314,29 +313,85 @@ void Processeur::loadStore(Programme &prog){
 	}
 }
 
-void Processeur::jump(){
-	switch((code_fetched.front()&0x3c00)>>10){
+void Processeur::jump_offset(){
+	uint32_t uoff=(code_fetched.front()&0x1fff)<<16;
+	code_fetched.pop_front();
+	uoff+=code_fetched.front();
+	if(uoff&0x10000000)
+		uoff|=0xf0000000;
+	int32_t off=uoff;
+	programm_counter+=off;
+	fetch_address=programm_counter;
+	std::cout<<"jump offset "<<std::hex<<off<<std::endl;
+	std::cout<<"PC "<<std::hex<<programm_counter<<std::endl;
+	code_fetched.clear();
+}
+
+void Processeur::jump_compare_offset(){
+	uint8_t op=(code_fetched.front()>>9)&0x03;
+	unsigned int Ra=(code_fetched.front()>>5)&0x0f;
+	unsigned int Rb=(code_fetched.front()>>1)&0x0f;
+	uint32_t uoff=0x0;
+	if(code_fetched.front()&0x01)
+		uoff=0xffff0000;
+	code_fetched.pop_front();
+	uoff+=code_fetched.front();
+	code_fetched.pop_front();
+	int32_t off=uoff;
+
+	std::cout<<"R"<<Ra<<":"<<std::hex<<registres.at(Ra)
+	<<" compared to R"<<Rb<<":"<<std::hex<<registres.at(Rb)<<std::endl;
+	std::cout<<"compare "<<(int)op<<std::endl;
+
+
+	if(!jump_compare_operation(op,registres.at(Ra),registres.at(Rb))){
+		programm_counter+=off;
+		fetch_address=programm_counter;
+		std::cout<<"jump occured, offset "<<std::hex<<off<<"\nnew PC "<<std::hex<<programm_counter<<std::endl;
+		code_fetched.clear();
+	}
+	else{
+		programm_counter+=2;
+		std::cout<<"no jump occured"<<std::endl;
+	}
+}
+
+bool Processeur::jump_compare_operation(uint8_t condition,uint16_t operandA,uint16_t operandB){
+	bool ret=false;
+	switch(condition){
 		case 0:
-		{
-			switch((code_fetched.front()&0x0300)>>8){
-				case 0:
-				{
-					uint32_t uoff=(code_fetched.front()&0x00ff);
-					if(uoff&0x00000080){
-					uoff|=0xffffff00;
-					}
-					int32_t off=uoff;
-					programm_counter=programm_counter+off;
-					code_fetched.clear();
-					std::cout<<"small jump PC="<<std::hex<<programm_counter<<std::endl;
-				}
-				break;
-				default:
-				break;
-			}
-		}
+			ret=(operandA==operandB);
 		break;
+		case 1:
+			ret=(operandA!=operandB);
+		break;
+		case 2:
+			ret=(operandA>operandB);
+		break;
+		case 3:
+			ret=(operandA<operandB);
+		break;
+		case 4:
+			ret=(operandA>=operandB);
+		break;
+		case 5:
+			ret=(operandA<=operandB);
+		break;
+		case 6:
+			ret=(operandA==0&&operandB==0);
+		case 7:
+			ret=(operandA+operandB>0xffff);
 		default:
 		break;
+	}
+	return ret;
+}
+
+void Processeur::jump(){
+	if(((code_fetched.front()>>13)&0x01)){
+		jump_offset();
+	}
+	else if(((code_fetched.front()>>12)&0x01)){
+		jump_compare_offset();
 	}
 }

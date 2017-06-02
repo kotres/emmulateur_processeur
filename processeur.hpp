@@ -36,6 +36,9 @@ private:
 	void loadStore(Programme& prog);
 	void alu_operation();
 	void jump();
+	void jump_offset();
+	bool jump_compare_operation(uint8_t condition,uint16_t operandA,uint16_t operandB);
+	void jump_compare_offset();
 	void move_indirect(Programme &prog, bool load);
 	void move_immediate(bool load);
 	void move_Rn_offset(Programme &prog, bool load);
