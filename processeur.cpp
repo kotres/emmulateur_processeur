@@ -9,22 +9,23 @@ Processeur::Processeur()
 :alu(),registres(),programm_counter(0),fetch_address(0),stack_pointer(0),code_fetched(),liste_instructions(),typeInstruction(NOP),
 etat(FETCH)
 {
-	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL));
-	liste_instructions.push_back(Instruction(0x0,16,NOP));
-	liste_instructions.push_back(Instruction(0x1,16,ILLEGAL));
-	liste_instructions.push_back(Instruction(0xc000,16,JUMP));
-	liste_instructions.push_back(Instruction(0x7,3,JUMP_OFFSET));
-	liste_instructions.push_back(Instruction(0xd,4,JUMP_COMPARE_OFFSET));
-	liste_instructions.push_back(Instruction(0x19,5,JUMP_COMPARE));
-	liste_instructions.push_back(Instruction(0x19,5,JUMP_COMPARE_IMMEDIATE_WORD));
-	liste_instructions.push_back(Instruction(0x2,2,ALU_OP));
-	liste_instructions.push_back(Instruction(0x3,3,MOVE_INDIRECT));
-	liste_instructions.push_back(Instruction(0x5,4,MOVE_IMMEDIATE));
-	liste_instructions.push_back(Instruction(0x9,5,MOVE_RN_OFFSET));
-	liste_instructions.push_back(Instruction(0x11,6,MOVE_IMMEDIATE_OFFSET));
-	liste_instructions.push_back(Instruction(0x21,7,MOVE_RN_ADDRESS));
-	liste_instructions.push_back(Instruction(0x41,8,MOVE_IMMEDIATE_ADDESS));
-	liste_instructions.push_back(Instruction(0x81,9,MOVE_WORD_IMMEDIATE));
+	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL,1));
+	liste_instructions.push_back(Instruction(0x0,16,NOP,1));
+	liste_instructions.push_back(Instruction(0x1,16,ILLEGAL,1));
+	liste_instructions.push_back(Instruction(0xc000,16,JUMP,3));
+	liste_instructions.push_back(Instruction(0x7,3,JUMP_OFFSET,2));
+	liste_instructions.push_back(Instruction(0xd,4,JUMP_COMPARE_OFFSET,2));
+	liste_instructions.push_back(Instruction(0x19,5,JUMP_COMPARE,3));
+	liste_instructions.push_back(Instruction(0x19,5,JUMP_COMPARE_IMMEDIATE_WORD,4));
+	liste_instructions.push_back(Instruction(0x4,3,ALU_OP_WORD,2));
+	liste_instructions.push_back(Instruction(0x5,3,ALU_OP,1));
+	liste_instructions.push_back(Instruction(0x3,3,MOVE_INDIRECT,1));
+	liste_instructions.push_back(Instruction(0x5,4,MOVE_IMMEDIATE,1));
+	liste_instructions.push_back(Instruction(0x9,5,MOVE_RN_OFFSET,2));
+	liste_instructions.push_back(Instruction(0x11,6,MOVE_IMMEDIATE_OFFSET,2));
+	liste_instructions.push_back(Instruction(0x21,7,MOVE_RN_ADDRESS,2));
+	liste_instructions.push_back(Instruction(0x41,8,MOVE_IMMEDIATE_ADDESS,3));
+	liste_instructions.push_back(Instruction(0x81,9,MOVE_WORD_IMMEDIATE,2));
 }
 
 void Processeur::fetch(Programme& prog){
@@ -120,6 +121,9 @@ void Processeur::execute(Programme& prog){
 		case ALU_OP:
 			alu_operation();
 		break;
+		case ALU_OP_WORD:
+			alu_operation_word();
+		break;
 		case JUMP:
 			jump();
 		break;
@@ -167,21 +171,35 @@ void Processeur::alu_operation(){
 	ALU_opcode op=(ALU_opcode)((code_fetched.front()&0x1f00)>>8);
 	alu.opcode()=op;
 	std::cout<<"opcode"<<((code_fetched.front()&0x1f00)>>8)<<std::endl;
-	if(!code_fetched.front()&0x2000){
-		alu.inputR()=registres.at(Rd);
-		std::cout<<"inputR: R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<std::endl;
-	}
-	else{
-		code_fetched.pop_front();
-		alu.inputR()=code_fetched.front();
-		std::cout<<"inputR: word "<<std::hex<<code_fetched.front()<<std::endl;
-		++programm_counter;
-	}
+	alu.inputR()=registres.at(Rd);
+	std::cout<<"inputR: R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<std::endl;
 	code_fetched.pop_front();
 	alu.update_state();
 	registres.at(Rd)=alu.resultat();
 	std::cout<<"result "<<std::hex<<alu.resultat()<<" stored in R"<<Rd<<std::endl;
 	++programm_counter;
+}
+
+void Processeur::alu_operation_word(){
+	std::cout<<"alu operation with word"<<std::endl;
+	unsigned int Rs,Rd;
+	Rs=(code_fetched.front()&0xf0)>>4;
+	Rd=(code_fetched.front()&0x0f);
+	alu.inputL()=registres.at(Rs);
+	std::cout<<"Rs: R"<<Rs<<":"<<std::hex<<registres.at(Rs)<<std::endl;
+	ALU_opcode op=(ALU_opcode)((code_fetched.front()&0x1f00)>>8);
+	alu.opcode()=op;
+	std::cout<<"opcode"<<((code_fetched.front()&0x1f00)>>8)<<std::endl;
+
+	code_fetched.pop_front();
+	alu.inputR()=code_fetched.front();
+	std::cout<<"inputR: word "<<std::hex<<code_fetched.front()<<std::endl;
+
+	code_fetched.pop_front();
+	alu.update_state();
+	registres.at(Rd)=alu.resultat();
+	std::cout<<"result "<<std::hex<<alu.resultat()<<" stored in R"<<Rd<<std::endl;
+	programm_counter+=2;
 }
 
 void Processeur::move_indirect(Programme &prog){

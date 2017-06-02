@@ -31,6 +31,7 @@ enum InstructionType{
 	JUMP_COMPARE,
 	JUMP_COMPARE_IMMEDIATE_WORD,
 	ALU_OP,
+	ALU_OP_WORD,
 	MOVE_INDIRECT,
 	MOVE_IMMEDIATE,
 	MOVE_RN_OFFSET,
@@ -48,13 +49,15 @@ private:
 	uint16_t mopcode;
 	uint16_t mopcode_size;
 	InstructionType mtype;
+	unsigned char msize;
 	//AluOperation op;
 public:
-	Instruction(uint16_t opcode,uint16_t opcode_size,InstructionType type);
+	Instruction(uint16_t opcode,uint16_t opcode_size,InstructionType type,unsigned char size);
 	bool valIn(uint16_t val) const;
 	uint16_t opcode() const;
 	InstructionType type() const;
 	uint16_t opcode_size() const;
+	unsigned char size() const;
 };
 
 #endif

@@ -34,6 +34,7 @@ private:
 	void decode();
 	void execute(Programme& prog);
 	void alu_operation();
+	void alu_operation_word();
 	void jump();
 	void jump_offset();
 	bool jump_compare_operation(uint8_t condition,uint16_t operandA,uint16_t operandB);
