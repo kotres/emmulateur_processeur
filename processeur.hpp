@@ -36,8 +36,8 @@ private:
 	MoveInstructionDecoder moveParameters;
 	void fetch(Programme& prog);
 	void decode();
-	void execute();
-	void move();
+	void execute(Programme &prog);
+	void move(Programme& prog);
 	void alu_operation();
 	void alu_operation_word();
 	void decodeOpcode();

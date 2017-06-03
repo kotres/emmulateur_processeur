@@ -158,13 +158,16 @@ void Processeur::decodeOpcode(){
 	std::cout<<"instruction "<<instruction.type()<<" trouvé"<<std::endl;
 }
 
-void Processeur::execute(){
+void Processeur::execute(Programme &prog){
 	std::cout<<"execute"<<std::endl;
 	switch(instruction.category()){
 		case SPECIAL:
+			std::cout<<"special instruction"<<std::endl;
+			code_fetched.clear();
+			programm_counter++;
 		break;
 		case MOVE:
-		 move();
+		 move(prog);
 		break;
 		case JUMP:
 		break;
@@ -185,30 +188,58 @@ void Processeur::clock_cycle(Programme& prog){
 			decode();
 		break;
 		case EXECUTE:
-			execute();
+			execute(prog);
 		break;
 		default:
 		break;
 	}
 }
 
-void Processeur::move(){
-	// if(moveParameters.memory){
-	// 	if (moveParameters.load)
-	// 	{
-	// 		registres.at(moveParameters.im)=prog(moveParameters.address);
-	// 	}
-	// 	else{
-	// 		prog(moveParameters.address)=registres.at(moveParameters.im);
-	// 	}
-	// }
-	// else{
-	// 	if (moveParameters.word)
-	// 	{
-	// 		registres.at(moveParameters.im)=moveParameters.word;
-	// 	}
-	// }
+void Processeur::move(Programme& prog){
+	switch(moveParameters.memory_type()){
+		case REGISTER:
+		{
+			if(moveParameters.load()){
+				registres.at(moveParameters.Rn())=registres.at(moveParameters.im());
+				std::cout<<"immediate "<<std::hex<<moveParameters.im()<<":"<<registres.at(moveParameters.im())<<
+				" loaded to R"<<moveParameters.Rn()<<std::endl;
+			}
+			else{
+				registres.at(moveParameters.im())=registres.at(moveParameters.Rn());
+				std::cout<<"R"<<moveParameters.Rn()<<":"<<registres.at(moveParameters.Rn())<<
+				" stored to immediate "<<moveParameters.im()<<std::endl;
+			}
+		}
+		break;
+		case WORD:
+			{
+				registres.at(moveParameters.im())=moveParameters.word();
+				std::cout<<"word "<<std::hex<<moveParameters.word()<<" loaded to immediate"<<std::hex<<moveParameters.im()<<std::endl;
+			}
+		break;
+		case ADDRESS:
+		{
+			if (moveParameters.load())
+			{
+				registres.at(moveParameters.im()) =prog(moveParameters.address());
+				std::cout<<"word at address"<<std::hex<<moveParameters.address()<<
+				":"<<std::hex<<prog(moveParameters.address())<< "loaded to immediate"<<std::hex<<moveParameters.im()<<std::endl;
+			}
+			else{
+				prog(moveParameters.address())=registres.at(moveParameters.im());
+				std::cout<<"immediate "<<std::hex<<moveParameters.im()<<":"<<registres.at(moveParameters.im())<<
+				" stored to address "<<std::hex<<moveParameters.address()<<std::endl;
+			}
+		}
+		break;
+		default:
+		break;
+	}
+
+
 	programm_counter+=instruction.size();
+	code_fetched.clear();
+	std::cout<<"move instruction executed"<<std::endl;
 }
 
 void Processeur::alu_operation(){

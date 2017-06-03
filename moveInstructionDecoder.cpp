@@ -1,12 +1,13 @@
 #include "moveInstructionDecoder.hpp"
+#include <iostream>
 
 void MoveInstructionDecoder::clear(){
-	Rn=0;
-	im=0;
-	address=0;
-	word=0;
-	load=false;
-	memory_type=REGISTER;
+	mRn=0;
+	mim=0;
+	maddress=0;
+	mword=0;
+	mload=false;
+	mmemory_type=REGISTER;
 }
 
 void MoveInstructionDecoder::decode(Instruction instruction,std::list<uint16_t> code_fetched,std::array<uint16_t,128> registres,uint32_t PC){
@@ -35,34 +36,44 @@ void MoveInstructionDecoder::decode(Instruction instruction,std::list<uint16_t> 
 		default:
 		break;
 	}
+	std::cout<<"move instruction decoded"<<std::endl;
 }
 
 
 void MoveInstructionDecoder::move_indirect(std::list<uint16_t> code_fetched,std::array<uint16_t,128> registres){
 	clear();
-	load=(bool)((code_fetched.front()>>12)&0x01);
+	std::cout<<"move indirect"<<std::endl;
+	mload=(bool)((code_fetched.front()>>12)&0x01);
+	if (mload)
+	{
+		std::cout<<"load"<<std::endl;
+	}
+	else
+		std::cout<<"store"<<std::endl;
 	unsigned int Rh,Rl;
 	Rh=(code_fetched.front()&0x0f00)>>8;
 	Rl=(code_fetched.front()&0x00f0)>>4;
-	im=code_fetched.front()&0x000f;
+	std::cout<<"Rh "<<Rh<<":"<<std::hex<<registres.at(Rh)<<" Rl "<<Rl<<":"<<std::hex<<registres.at(Rl)<<std::endl;
+	mim=code_fetched.front()&0x000f;
 	code_fetched.pop_front();
-	address=(registres.at(Rh)<<16)+registres.at(Rl);
-	memory_type=ADDRESS;
+	maddress=(registres.at(Rh)<<16)+registres.at(Rl);
+	std::cout<<"address "<<std::hex<<maddress<<std::endl;
+	mmemory_type=ADDRESS;
 }
 
 void MoveInstructionDecoder::move_immediate(std::list<uint16_t> code_fetched){
 	clear();
-	load=(bool)((code_fetched.front()>>11)&0x01);
-	im=(code_fetched.front()>>4)&0x3f;
-	Rn=code_fetched.front()&0x0f;
-	memory_type=REGISTER;
+	mload=(bool)((code_fetched.front()>>11)&0x01);
+	mim=(code_fetched.front()>>4)&0x3f;
+	mRn=code_fetched.front()&0x0f;
+	mmemory_type=REGISTER;
 
 }
 
 void MoveInstructionDecoder::move_Rn_offset(std::list<uint16_t> code_fetched,uint32_t PC){
 	clear();
-	load=(bool)((code_fetched.front()>>10)&0x01);
-	im=(code_fetched.front()>>6)&0x0f;
+	mload=(bool)((code_fetched.front()>>10)&0x01);
+	mim=(code_fetched.front()>>6)&0x0f;
 	uint32_t uoff=(code_fetched.front()&0x003f)<<16;
 	code_fetched.pop_front();
 	uoff+=code_fetched.front();
@@ -71,14 +82,14 @@ void MoveInstructionDecoder::move_Rn_offset(std::list<uint16_t> code_fetched,uin
 		uoff|=0xffc00000;
 	}
 	int32_t off=uoff;
-	address=PC+off;
-	memory_type=ADDRESS;
+	maddress=PC+off;
+	mmemory_type=ADDRESS;
 }
 
 void MoveInstructionDecoder::move_immediate_offset(std::list<uint16_t> code_fetched,uint32_t PC){
 	clear();
-	load=(bool)((code_fetched.front()>>9)&0x01);
-	im=(code_fetched.front()>>6)&0x3f;
+	mload=(bool)((code_fetched.front()>>9)&0x01);
+	mim=(code_fetched.front()>>6)&0x3f;
 	uint32_t uoff=(code_fetched.front()&0x0003)<<16;
 	code_fetched.pop_front();
 	uoff+=code_fetched.front();
@@ -87,35 +98,60 @@ void MoveInstructionDecoder::move_immediate_offset(std::list<uint16_t> code_fetc
 		uoff|=0xfffc0000;
 	}
 	int32_t off=uoff;
-	address=PC+off;
-	memory_type=ADDRESS;
+	maddress=PC+off;
+	mmemory_type=ADDRESS;
 }
 
 void MoveInstructionDecoder::move_Rn_address(std::list<uint16_t> code_fetched){
 	clear();
-	load=(bool)((code_fetched.front()>>8)&0x01);
-	im=(code_fetched.front()>>4)&0x0f;
-	address=(code_fetched.front()&0x0f)<<16;
+	mload=(bool)((code_fetched.front()>>8)&0x01);
+	mim=(code_fetched.front()>>4)&0x0f;
+	maddress=(code_fetched.front()&0x0f)<<16;
 	code_fetched.pop_front();
-	address+=code_fetched.front();
-	memory_type=ADDRESS;
+	maddress+=code_fetched.front();
+	mmemory_type=ADDRESS;
 }
 
 void MoveInstructionDecoder::move_immediate_address(std::list<uint16_t> code_fetched){
-	load=(bool)((code_fetched.front()>>7)&0x01);
-	im=code_fetched.front()&0x3f;
+	mload=(bool)((code_fetched.front()>>7)&0x01);
+	mim=code_fetched.front()&0x3f;
 	code_fetched.pop_front();
-	address=code_fetched.front()<<16;
+	maddress=code_fetched.front()<<16;
 	code_fetched.pop_front();
-	address+=code_fetched.front();
+	maddress+=code_fetched.front();
 	code_fetched.pop_front();
-	memory_type=ADDRESS;
+	mmemory_type=ADDRESS;
 }
 
 void MoveInstructionDecoder::move_word_immediate(std::list<uint16_t> code_fetched){
-	im=code_fetched.front()&0x3f;
+	mim=code_fetched.front()&0x3f;
 	code_fetched.pop_front();
-	word=code_fetched.front();
+	mword=code_fetched.front();
 	code_fetched.pop_front();
-	memory_type=WORD;
+	mmemory_type=WORD;
+	std::cout<<"load word "<<mword<<" to immediate "<<std::hex<<mim<<" decoded"<<std::endl;
+}
+
+bool MoveInstructionDecoder::load() const{
+	return mload;
+}
+
+MemoryType MoveInstructionDecoder::memory_type() const{
+	return mmemory_type;
+}
+
+uint32_t MoveInstructionDecoder::address() const{
+	return maddress;
+}
+
+unsigned int MoveInstructionDecoder::im() const{
+	return mim;
+}
+
+unsigned int MoveInstructionDecoder::Rn() const{
+	return mRn;
+}
+
+uint16_t MoveInstructionDecoder::word() const{
+	return mword;
 }
