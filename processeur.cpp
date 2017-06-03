@@ -119,6 +119,7 @@ void Processeur::execute(Programme &prog){
 		 move(prog);
 		break;
 		case JUMP:
+			jump();
 		break;
 		case ALU_OPERATION:
 		break;
@@ -186,10 +187,44 @@ void Processeur::move(Programme& prog){
 		break;
 	}
 
-
 	programm_counter+=instruction.size();
 	code_fetched.clear();
 	std::cout<<"move instruction executed"<<std::endl;
+}
+
+void Processeur::jump(){
+	switch(jumpParameters.type()){
+		case UNCONDITIONAL:
+			programm_counter=jumpParameters.address();
+			fetch_address=programm_counter;
+			std::cout<<"unconditional jump to address "<<std::hex<<jumpParameters.address()<<" executed"<<std::endl;
+		break;
+		case COMPARATIVE:
+		{
+			uint16_t operandA=registres.at(jumpParameters.im());
+			uint16_t operandB;
+			if(jumpParameters.isWord()){
+				operandB=jumpParameters.word();
+			}
+			else
+				operandB=registres.at(jumpParameters.Rn());
+			if(jump_compare_operation(jumpParameters.compare_operation(),operandA,operandB)){
+				programm_counter=jumpParameters.address();
+				fetch_address=programm_counter;
+				std::cout<<"comparative jump executed, new PC "<<std::hex<<programm_counter<<std::endl;
+			}
+			else{
+				programm_counter+=instruction.size();
+				std::cout<<"comparative jump not executed, PC "<<std::hex<<programm_counter<<std::endl;
+			}
+		}
+		break;
+		default:
+			programm_counter+=instruction.size();
+		break;
+	}
+	std::cout<<"jump executed"<<std::endl;
+	code_fetched.clear();
 }
 
 void Processeur::alu_operation(){

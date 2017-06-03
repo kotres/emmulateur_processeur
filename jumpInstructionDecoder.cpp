@@ -116,3 +116,28 @@ void JumpInstructionDecoder::jump_address(std::list<uint16_t> code_fetched){
 	std::cout<<"unconditional jump to address "<<std::hex<<maddress<<" decoded"<<std::endl;
 	mtype=UNCONDITIONAL;
 }
+
+JumpTypes JumpInstructionDecoder::type() const{
+	return mtype;
+}
+uint32_t JumpInstructionDecoder::address() const{
+	return maddress;
+}
+uint16_t JumpInstructionDecoder::word() const{
+	return mword;
+}
+bool JumpInstructionDecoder::isWord() const{
+	return misWord;
+}
+unsigned int JumpInstructionDecoder::im() const{
+	return mim;
+}
+unsigned int JumpInstructionDecoder::Rn() const{
+	return mRn;
+}
+unsigned char JumpInstructionDecoder::compare_operation() const{
+	return mcompare_operation;
+}
+JumpCondition JumpInstructionDecoder::condition(){
+	return mcondition;
+}

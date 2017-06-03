@@ -11,7 +11,8 @@ enum JumpTypes
 	NO_TYPE,
 	UNCONDITIONAL,
 	CONDITIONAL,
-	COMPARATIVE
+	COMPARATIVE,
+	DECREASE_JUMP_NOT_ZERO
 };
 
 enum  JumpCondition
@@ -48,6 +49,14 @@ class JumpInstructionDecoder
 	void jump_address(std::list<uint16_t> code_fetched);
 public:
 	void decode(Instruction instruction, std::list<uint16_t> code_fetched,uint32_t PC);
+	JumpTypes type() const;
+	uint32_t address() const;
+	uint16_t word() const;
+	bool isWord() const;
+	unsigned int im() const;
+	unsigned int Rn() const;
+	unsigned char compare_operation() const;
+	JumpCondition condition();
 };
 
 #endif

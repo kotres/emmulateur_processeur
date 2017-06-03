@@ -40,6 +40,7 @@ private:
 	void decode();
 	void execute(Programme &prog);
 	void move(Programme& prog);
+	void jump();
 	void alu_operation();
 	void alu_operation_word();
 	void decodeOpcode();
