@@ -57,15 +57,28 @@ void Processeur::fetch(Programme& prog){
 			code_fetched.push_back(prog(fetch_address));
 			std::cout<<std::hex<<code_fetched.back()<<std::endl;
 			++fetch_address;
-			etat=DECODE;
+			decodeOpcode();
+			if(instruction.size()==1)
+				etat=DECODE;
+		}
+		else{
+			code_fetched.push_back(prog(fetch_address));
+			fetch_address++;
+			if(instruction.size()<=code_fetched.size())
+				etat=DECODE;
 		}
 	}
 }
 
 
 void Processeur::decode(){
-	instruction=liste_instructions.front();
+	//TODO: faire la fonction decode
 	std::cout<<"decode"<<std::endl;
+	etat=EXECUTE;
+}
+
+void Processeur::decodeOpcode(){
+	instruction= liste_instructions.front();
 	std::list<Instruction>::iterator it,it_final;
 	it=liste_instructions.begin();
 	it_final=liste_instructions.begin();
@@ -79,22 +92,6 @@ void Processeur::decode(){
 	instruction=*it_final;
 	std::cout<<"code "<<code_fetched.front()<<std::endl;
 	std::cout<<"instruction "<<instruction.type()<<" trouvé"<<std::endl;
-	if(instruction.size()==1)
-		etat=EXECUTE;
-	else
-		etat=FETCH_PARAMETERS;
-}
-
-void Processeur::fetch_parameters(Programme& prog){
-	std::cout<<"fetch parameters"<<std::endl;
-	if(code_fetched.size()<instruction.size()){
-		code_fetched.push_back(prog(fetch_address));
-		fetch_address++;
-		std::cout<<std::hex<<fetch_address-1<<":"<<std::hex<<code_fetched.back()<<std::endl;
-	}
-	if(code_fetched.size()>=instruction.size()){
-		etat=EXECUTE;
-	}
 }
 
 void Processeur::execute(Programme& prog){
@@ -165,9 +162,6 @@ void Processeur::clock_cycle(Programme& prog){
 		break;
 		case DECODE:
 			decode();
-		break;
-		case FETCH_PARAMETERS:
-			fetch_parameters(prog);
 		break;
 		case EXECUTE:
 			execute(prog);

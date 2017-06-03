@@ -15,7 +15,6 @@ class Instruction;
 enum EtatProcesseur{
 	FETCH,
 	DECODE,
-	FETCH_PARAMETERS,
 	EXECUTE
 };
 
@@ -33,10 +32,10 @@ private:
 	EtatProcesseur etat;
 	void fetch(Programme& prog);
 	void decode();
-	void fetch_parameters(Programme& prog);
 	void execute(Programme& prog);
 	void alu_operation();
 	void alu_operation_word();
+	void decodeOpcode();
 	void jump();
 	void jump_offset();
 	bool jump_compare_operation(uint8_t condition,uint16_t operandA,uint16_t operandB);
