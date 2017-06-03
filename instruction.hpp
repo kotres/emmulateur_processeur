@@ -7,25 +7,17 @@
 #include "programme.hpp"
 
 
-/*enum AluOperation{
-	no_op,
-	add,
-	sub
-};*/
-
-/*enum SourceDestination{
-	NO_SOURCE_DEST,
-	Word,
-	ADDRESS,
-	RN,
-	OFFSET,
-	INDIRECT
-};*/
+enum InstructionCategory{
+	SPECIAL,
+	MOVE,
+	JUMP,
+	ALU_OPERATION,
+};
 
 enum InstructionType{
 	NOP,
 	ILLEGAL,
-	JUMP,
+	JUMP_ADDRESS,
 	JUMP_OFFSET,
 	JUMP_COMPARE_OFFSET,
 	JUMP_COMPARE,
@@ -39,7 +31,6 @@ enum InstructionType{
 	MOVE_RN_ADDRESS,
 	MOVE_IMMEDIATE_ADDESS,
 	MOVE_WORD_IMMEDIATE,
-	
 };
 
 
@@ -50,14 +41,15 @@ private:
 	uint16_t mopcode_size;
 	InstructionType mtype;
 	unsigned char msize;
-	//AluOperation op;
+	InstructionCategory mcategory;
 public:
-	Instruction(uint16_t opcode,uint16_t opcode_size,InstructionType type,unsigned char size);
+	Instruction(uint16_t opcode,uint16_t opcode_size,InstructionType type,unsigned char size,InstructionCategory category);
 	bool valIn(uint16_t val) const;
 	uint16_t opcode() const;
 	InstructionType type() const;
 	uint16_t opcode_size() const;
 	unsigned char size() const;
+	InstructionCategory category() const;
 };
 
 #endif

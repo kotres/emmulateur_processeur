@@ -9,6 +9,7 @@
 #include "ALU.hpp"
 #include "programme.hpp"
 #include "instruction.hpp"
+#include "moveInstructionDecoder.hpp"
 
 class Instruction;
 
@@ -17,6 +18,8 @@ enum EtatProcesseur{
 	DECODE,
 	EXECUTE
 };
+
+
 
 class Processeur
 {
@@ -30,25 +33,20 @@ private:
 	std::list<Instruction> liste_instructions;
 	Instruction instruction;
 	EtatProcesseur etat;
+	MoveInstructionDecoder moveParameters;
 	void fetch(Programme& prog);
 	void decode();
-	void execute(Programme& prog);
+	void execute();
+	void move();
 	void alu_operation();
 	void alu_operation_word();
 	void decodeOpcode();
-	void jump();
+	void jump_address();
 	void jump_offset();
 	bool jump_compare_operation(uint8_t condition,uint16_t operandA,uint16_t operandB);
 	void jump_compare_offset();
 	void jump_compare();
 	void jump_compare_immediate_word();
-	void move_indirect(Programme &prog);
-	void move_immediate();
-	void move_Rn_offset(Programme &prog);
-	void move_immediate_offset(Programme &prog);
-	void move_Rn_address(Programme &prog);
-	void move_immediate_address(Programme &prog);
-	void move_word_immediate();
 public:
 	void clock_cycle(Programme& prog);
 	Processeur();

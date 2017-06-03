@@ -6,26 +6,26 @@
 #define THREE_WORD_MIN 0x7c01
 
 Processeur::Processeur()
-:alu(),registres(),programm_counter(0),fetch_address(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(0x0,0,ILLEGAL,1),
-etat(FETCH)
+:alu(),registres(),programm_counter(0),fetch_address(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(0x0,0,ILLEGAL,1,SPECIAL),
+etat(FETCH),moveParameters()
 {
-	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL,1));
-	liste_instructions.push_back(Instruction(0x0,16,NOP,1));
-	liste_instructions.push_back(Instruction(0x1,16,ILLEGAL,1));
-	liste_instructions.push_back(Instruction(0xc000,16,JUMP,3));
-	liste_instructions.push_back(Instruction(0x7,3,JUMP_OFFSET,2));
-	liste_instructions.push_back(Instruction(0xd,4,JUMP_COMPARE_OFFSET,2));
-	liste_instructions.push_back(Instruction(0x19,5,JUMP_COMPARE,3));
-	liste_instructions.push_back(Instruction(0x19,5,JUMP_COMPARE_IMMEDIATE_WORD,4));
-	liste_instructions.push_back(Instruction(0x4,3,ALU_OP_WORD,2));
-	liste_instructions.push_back(Instruction(0x5,3,ALU_OP,1));
-	liste_instructions.push_back(Instruction(0x3,3,MOVE_INDIRECT,1));
-	liste_instructions.push_back(Instruction(0x5,4,MOVE_IMMEDIATE,1));
-	liste_instructions.push_back(Instruction(0x9,5,MOVE_RN_OFFSET,2));
-	liste_instructions.push_back(Instruction(0x11,6,MOVE_IMMEDIATE_OFFSET,2));
-	liste_instructions.push_back(Instruction(0x21,7,MOVE_RN_ADDRESS,2));
-	liste_instructions.push_back(Instruction(0x41,8,MOVE_IMMEDIATE_ADDESS,3));
-	liste_instructions.push_back(Instruction(0x81,9,MOVE_WORD_IMMEDIATE,2));
+	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL,1,SPECIAL));
+	liste_instructions.push_back(Instruction(0x0,16,NOP,1,SPECIAL));
+	liste_instructions.push_back(Instruction(0x1,16,ILLEGAL,1,SPECIAL));
+	liste_instructions.push_back(Instruction(0xc000,16,JUMP_ADDRESS,3,JUMP));
+	liste_instructions.push_back(Instruction(0x7,3,JUMP_OFFSET,2,JUMP));
+	liste_instructions.push_back(Instruction(0xd,4,JUMP_COMPARE_OFFSET,2,JUMP));
+	liste_instructions.push_back(Instruction(0x19,5,JUMP_COMPARE,3,JUMP));
+	liste_instructions.push_back(Instruction(0x19,5,JUMP_COMPARE_IMMEDIATE_WORD,4,JUMP));
+	liste_instructions.push_back(Instruction(0x4,3,ALU_OP_WORD,2,ALU_OPERATION));
+	liste_instructions.push_back(Instruction(0x5,3,ALU_OP,1,ALU_OPERATION));
+	liste_instructions.push_back(Instruction(0x3,3,MOVE_INDIRECT,1,MOVE));
+	liste_instructions.push_back(Instruction(0x5,4,MOVE_IMMEDIATE,1,MOVE));
+	liste_instructions.push_back(Instruction(0x9,5,MOVE_RN_OFFSET,2,MOVE));
+	liste_instructions.push_back(Instruction(0x11,6,MOVE_IMMEDIATE_OFFSET,2,MOVE));
+	liste_instructions.push_back(Instruction(0x21,7,MOVE_RN_ADDRESS,2,MOVE));
+	liste_instructions.push_back(Instruction(0x41,8,MOVE_IMMEDIATE_ADDESS,3,MOVE));
+	liste_instructions.push_back(Instruction(0x81,9,MOVE_WORD_IMMEDIATE,2,MOVE));
 }
 
 
@@ -72,8 +72,72 @@ void Processeur::fetch(Programme& prog){
 
 
 void Processeur::decode(){
-	//TODO: faire la fonction decode
 	std::cout<<"decode"<<std::endl;
+	// 	switch(instruction.type()){
+	// 	case NOP:
+	// 		std::cout<<"nop"<<std::endl;
+	// 	break;
+	// 	case ILLEGAL:
+	// 		std::cout<<"illegal"<<std::endl;
+	// 	break;
+	// 	case MOVE_INDIRECT:
+	// 		decode_move_indirect(prog);
+	// 	break;
+	// 	case MOVE_IMMEDIATE:
+	// 		move_immediate();
+	// 	break;
+	// 	case MOVE_RN_OFFSET:
+	// 		move_Rn_offset(prog);
+	// 	break;
+	// 	case MOVE_IMMEDIATE_OFFSET:
+	// 		move_immediate_offset(prog);
+	// 	break;
+	// 	case MOVE_RN_ADDRESS:
+	// 		move_Rn_address(prog);
+	// 	break;
+	// 	case MOVE_IMMEDIATE_ADDESS:
+	// 		move_immediate_address(prog);
+	// 	break;
+	// 	case MOVE_WORD_IMMEDIATE:
+	// 		move_word_immediate();
+	// 	break;
+	// 	case ALU_OP:
+	// 		alu_operation();
+	// 	break;
+	// 	case ALU_OP_WORD:
+	// 		alu_operation_word();
+	// 	break;
+	// 	case JUMP_ADDRESS:
+	// 		jump_address();
+	// 	break;
+	// 	case JUMP_OFFSET:
+	// 		std::cout<<"jump offset"<<std::endl;
+	// 		jump_offset();
+	// 	break;
+	// 	case JUMP_COMPARE_OFFSET:
+	// 		jump_compare_offset();
+	// 	break;
+	// 	case JUMP_COMPARE:
+	// 		jump_offset();
+	// 	case JUMP_COMPARE_IMMEDIATE_WORD:
+	// 		jump_compare_immediate_word();
+	// 	break;
+	// 	default:
+	// 	break;
+	// }
+	switch(instruction.category()){
+		case MOVE:
+			moveParameters.decode(instruction,code_fetched,registres,programm_counter);
+		break;
+		case SPECIAL:
+		break;
+		case JUMP:
+		break;
+		case ALU_OPERATION:
+		break;
+		default:
+		break;
+	}
 	etat=EXECUTE;
 }
 
@@ -94,60 +158,17 @@ void Processeur::decodeOpcode(){
 	std::cout<<"instruction "<<instruction.type()<<" trouvé"<<std::endl;
 }
 
-void Processeur::execute(Programme& prog){
+void Processeur::execute(){
 	std::cout<<"execute"<<std::endl;
-	switch(instruction.type()){
-		case NOP:
-			std::cout<<"nop"<<std::endl;
-			code_fetched.pop_front();
-			++programm_counter;
+	switch(instruction.category()){
+		case SPECIAL:
 		break;
-		case ILLEGAL:
-			std::cout<<"illegal"<<std::endl;
-			code_fetched.pop_front();
-			++programm_counter;
-		break;
-		case MOVE_INDIRECT:
-			move_indirect(prog);
-		break;
-		case MOVE_IMMEDIATE:
-			move_immediate();
-		break;
-		case MOVE_RN_OFFSET:
-			move_Rn_offset(prog);
-		break;
-		case MOVE_IMMEDIATE_OFFSET:
-			move_immediate_offset(prog);
-		break;
-		case MOVE_RN_ADDRESS:
-			move_Rn_address(prog);
-		break;
-		case MOVE_IMMEDIATE_ADDESS:
-			move_immediate_address(prog);
-		break;
-		case MOVE_WORD_IMMEDIATE:
-			move_word_immediate();
-		break;
-		case ALU_OP:
-			alu_operation();
-		break;
-		case ALU_OP_WORD:
-			alu_operation_word();
+		case MOVE:
+		 move();
 		break;
 		case JUMP:
-			jump();
 		break;
-		case JUMP_OFFSET:
-			std::cout<<"jump offset"<<std::endl;
-			jump_offset();
-		break;
-		case JUMP_COMPARE_OFFSET:
-			jump_compare_offset();
-		break;
-		case JUMP_COMPARE:
-			jump_offset();
-		case JUMP_COMPARE_IMMEDIATE_WORD:
-			jump_compare_immediate_word();
+		case ALU_OPERATION:
 		break;
 		default:
 		break;
@@ -164,11 +185,30 @@ void Processeur::clock_cycle(Programme& prog){
 			decode();
 		break;
 		case EXECUTE:
-			execute(prog);
+			execute();
 		break;
 		default:
 		break;
 	}
+}
+
+void Processeur::move(){
+	// if(moveParameters.memory){
+	// 	if (moveParameters.load)
+	// 	{
+	// 		registres.at(moveParameters.im)=prog(moveParameters.address);
+	// 	}
+	// 	else{
+	// 		prog(moveParameters.address)=registres.at(moveParameters.im);
+	// 	}
+	// }
+	// else{
+	// 	if (moveParameters.word)
+	// 	{
+	// 		registres.at(moveParameters.im)=moveParameters.word;
+	// 	}
+	// }
+	programm_counter+=instruction.size();
 }
 
 void Processeur::alu_operation(){
@@ -212,148 +252,7 @@ void Processeur::alu_operation_word(){
 	programm_counter+=2;
 }
 
-void Processeur::move_indirect(Programme &prog){
-	bool load=(bool)((code_fetched.front()>>12)&0x01);
-	unsigned int Rh,Rl,Rd;
-	Rh=(code_fetched.front()&0x0f00)>>8;
-	Rl=(code_fetched.front()&0x00f0)>>4;
-	Rd=code_fetched.front()&0x000f;
-	code_fetched.pop_front();
-	uint32_t addr=(registres.at(Rh)<<16)+registres.at(Rl);
-	if(load){
-		registres.at(Rd)=prog(addr);
-		std::cout<<"indirect, word at address "<<std::hex<<addr<<":"<<std::hex<<prog(addr)<<" loaded to R"<<Rd<<std::endl;
-	}
-	else{
-		prog(addr)=registres.at(Rd);
-		std::cout<<"R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<" stored to indirect address "<<std::hex<<addr<<std::endl;
-	}
-	++programm_counter;
-}
 
-void Processeur::move_immediate(){
-	bool load=(bool)((code_fetched.front()>>11)&0x01);
-	unsigned int Rn,im;
-	im=(code_fetched.front()>>4)&0x3f;
-	Rn=code_fetched.front()&0x0f;
-	code_fetched.pop_front();
-	if(load){
-		registres.at(Rn)=registres.at(im);
-		std::cout<<"word at immediate "<<std::hex<<im<<":"<<std::hex<<registres.at(im)<<" loaded to R"<<Rn<<std::endl;
-	}
-	else{
-		registres.at(im)=registres.at(Rn);
-		std::cout<<"R"<<Rn<<":"<<std::hex<<registres.at(Rn)<<" stored to im "<<std::hex<<im<<std::endl;
-	}
-	++programm_counter;
-}
-
-void Processeur::move_Rn_offset(Programme &prog){
-	bool load=(bool)((code_fetched.front()>>10)&0x01);
-	unsigned int Rn=(code_fetched.front()>>6)&0x0f;
-	uint32_t uoff=(code_fetched.front()&0x003f)<<16;
-	code_fetched.pop_front();
-	uoff+=code_fetched.front();
-	code_fetched.pop_front();
-	if(uoff&0x00200000){
-		uoff|=0xffc00000;
-	}
-	int32_t off=uoff;
-	std::cout<<"offset "<<std::hex<<off<<std::endl;
-	if(load){
-		registres.at(Rn)=prog(programm_counter+off);
-		std::cout<<"word at address "<<std::hex<<programm_counter-3+off
-		<<":"<<std::hex<<prog(programm_counter+off)<<" loaded to R"<<Rn<<std::endl;
-	}
-	else{
-		prog(programm_counter+off)=registres.at(Rn);
-		std::cout<<"R"<<Rn<<":"<<std::hex<<registres.at(Rn)
-		<<"stored to address"<<std::hex<<programm_counter-3+off<<std::endl;
-		if(off==1){
-			code_fetched.front()=registres.at(Rn);
-		}
-	}
-	programm_counter+=2;
-}
-
-void Processeur::move_immediate_offset(Programme &prog){
-	bool load=(bool)((code_fetched.front()>>9)&0x01);
-	unsigned int imm=(code_fetched.front()>>6)&0x3f;
-	uint32_t uoff=(code_fetched.front()&0x0003)<<16;
-	code_fetched.pop_front();
-	uoff+=code_fetched.front();
-	code_fetched.pop_front();
-	if(uoff&0x00020000){
-		uoff|=0xfffc0000;
-	}
-	int32_t off=uoff;
-	std::cout<<"offset "<<std::hex<<off<<std::endl;
-	if(load){
-		registres.at(imm)=prog(programm_counter+off);
-		std::cout<<"word at address "<<std::hex<<programm_counter+off<<
-		":"<<std::hex<<prog(programm_counter+off)<<" loaded to immediate "<<std::hex<<imm<<std::endl;
-	}
-	else{
-		prog(programm_counter+off)=registres.at(imm);
-		std::cout<<"immediate"<<std::hex<<imm<<":"<<std::hex<<registres.at(imm)<<" stored to address "
-		<<std::hex<<programm_counter+off<<std::endl;
-		if(off==1){
-			code_fetched.front()=registres.at(imm);
-		}
-	}
-	programm_counter+=2;
-}
-
-void Processeur::move_Rn_address(Programme &prog){
-	bool load=(bool)((code_fetched.front()>>8)&0x01);
-	unsigned int Rn=(code_fetched.front()>>4)&0x0f;
-	uint32_t address=(code_fetched.front()&0x0f)<<16;
-	code_fetched.pop_front();
-	address+=code_fetched.front();
-	code_fetched.pop_front();
-	if(load){
-		registres.at(Rn)=prog(address);
-		std::cout<<"word at address"<<std::hex<<address<<":"<<std::hex<<prog(address)<<
-		" loaded to register R"<<Rn<<std::endl;
-	}
-	else{
-		prog(address)=registres.at(Rn);
-		std::cout<<"register R"<<Rn<<":"<<std::hex<<registres.at(Rn)<<" stored to address "<<
-		std::hex<<address<<std::endl;
-	}
-	programm_counter+=2;
-}
-
-void Processeur::move_immediate_address(Programme &prog){
-	bool load=(bool)((code_fetched.front()>>7)&0x01);
-	unsigned int im=code_fetched.front()&0x3f;
-	code_fetched.pop_front();
-	uint32_t address=code_fetched.front()<<16;
-	code_fetched.pop_front();
-	address+=code_fetched.front();
-	code_fetched.pop_front();
-	if(load){
-		registres.at(im)=prog(address);
-		std::cout<<"word at address"<<std::hex<<address<<":"<<std::hex<<prog(address)<<
-		" loaded to immediate "<<im<<std::endl;
-	}
-	else{
-		prog(address)=registres.at(im);
-		std::cout<<"immediate "<<im<<":"<<std::hex<<registres.at(im)<<" stored to address "<<
-		std::hex<<address<<std::endl;
-	}
-	programm_counter+=3;
-}
-
-void Processeur::move_word_immediate(){
-	unsigned int im=code_fetched.front()&0x3f;
-	code_fetched.pop_front();
-	uint16_t word=code_fetched.front();
-	code_fetched.pop_front();
-	registres.at(im)=word;
-	std::cout<<"word "<<std::hex<<word<<" loaded to immediate "<<std::hex<<im<<std::endl;
-	programm_counter+=2;
-}
 
 void Processeur::jump_offset(){
 	uint32_t uoff=(code_fetched.front()&0x1fff)<<16;
@@ -484,7 +383,7 @@ bool Processeur::jump_compare_operation(uint8_t condition,uint16_t operandA,uint
 }
 
 
-void Processeur::jump(){
+void Processeur::jump_address(){
 	code_fetched.pop_front();
 	uint32_t address=code_fetched.front()<<16;
 	code_fetched.pop_front();

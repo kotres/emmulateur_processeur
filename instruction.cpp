@@ -1,7 +1,7 @@
 #include "instruction.hpp"
 
-Instruction::Instruction(uint16_t opcode,uint16_t opcode_size,InstructionType type,unsigned char size)
-:mopcode(opcode),mopcode_size(opcode_size),mtype(type),msize(size)
+Instruction::Instruction(uint16_t opcode,uint16_t opcode_size,InstructionType type,unsigned char size,InstructionCategory category)
+:mopcode(opcode),mopcode_size(opcode_size),mtype(type),msize(size),mcategory(category)
 {}
 
 bool Instruction::valIn(uint16_t val) const{
@@ -22,4 +22,8 @@ uint16_t Instruction::opcode_size() const{
 
 unsigned char Instruction::size() const{
 	return msize;
+}
+
+InstructionCategory Instruction::category() const{
+	return mcategory;
 }
