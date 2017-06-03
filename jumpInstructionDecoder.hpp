@@ -2,17 +2,21 @@
 #ifndef JUMP_INSTRUCTION_DECODER
 #define JUMP_INSTRUCTION_DECODER
 
+#include "instruction.hpp"
+
 #include <list>
 
 enum JumpTypes
 {
-	DIRECT,
+	NO_TYPE,
+	UNCONDITIONAL,
 	CONDITIONAL,
-	COMPARATIVE;
+	COMPARATIVE
 };
 
 enum  JumpCondition
 {
+	NO_CONDITION,
 	CARRY_SET,
 	CARRY_CLEAR,
 	POSITIVE,
@@ -33,10 +37,17 @@ class JumpInstructionDecoder
 	uint32_t maddress;
 	bool misWord;
 	uint16_t mword;
-	unsigned char compare_operation; 
+	unsigned int mim,mRn;
+	unsigned char mcompare_operation; 
 	JumpCondition mcondition;
+	void clear();
+	void jump_offset(std::list<uint16_t> code_fetched,uint32_t PC);
+	void jump_compare_offset(std::list<uint16_t> code_fetched,uint32_t PC);
+	void jump_compare(std::list<uint16_t> code_fetched);
+	void jump_compare_immediate_word(std::list<uint16_t> code_fetched);
+	void jump_address(std::list<uint16_t> code_fetched);
 public:
-	decode(std::list<uint16_t> code_fetched);
+	void decode(Instruction instruction, std::list<uint16_t> code_fetched,uint32_t PC);
 };
 
 #endif

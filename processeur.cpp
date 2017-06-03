@@ -7,7 +7,7 @@
 
 Processeur::Processeur()
 :alu(),registres(),programm_counter(0),fetch_address(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(0x0,0,ILLEGAL,1,SPECIAL),
-etat(FETCH),moveParameters()
+etat(FETCH),moveParameters(),jumpParameters()
 {
 	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL,1,SPECIAL));
 	liste_instructions.push_back(Instruction(0x0,16,NOP,1,SPECIAL));
@@ -73,58 +73,6 @@ void Processeur::fetch(Programme& prog){
 
 void Processeur::decode(){
 	std::cout<<"decode"<<std::endl;
-	// 	switch(instruction.type()){
-	// 	case NOP:
-	// 		std::cout<<"nop"<<std::endl;
-	// 	break;
-	// 	case ILLEGAL:
-	// 		std::cout<<"illegal"<<std::endl;
-	// 	break;
-	// 	case MOVE_INDIRECT:
-	// 		decode_move_indirect(prog);
-	// 	break;
-	// 	case MOVE_IMMEDIATE:
-	// 		move_immediate();
-	// 	break;
-	// 	case MOVE_RN_OFFSET:
-	// 		move_Rn_offset(prog);
-	// 	break;
-	// 	case MOVE_IMMEDIATE_OFFSET:
-	// 		move_immediate_offset(prog);
-	// 	break;
-	// 	case MOVE_RN_ADDRESS:
-	// 		move_Rn_address(prog);
-	// 	break;
-	// 	case MOVE_IMMEDIATE_ADDESS:
-	// 		move_immediate_address(prog);
-	// 	break;
-	// 	case MOVE_WORD_IMMEDIATE:
-	// 		move_word_immediate();
-	// 	break;
-	// 	case ALU_OP:
-	// 		alu_operation();
-	// 	break;
-	// 	case ALU_OP_WORD:
-	// 		alu_operation_word();
-	// 	break;
-	// 	case JUMP_ADDRESS:
-	// 		jump_address();
-	// 	break;
-	// 	case JUMP_OFFSET:
-	// 		std::cout<<"jump offset"<<std::endl;
-	// 		jump_offset();
-	// 	break;
-	// 	case JUMP_COMPARE_OFFSET:
-	// 		jump_compare_offset();
-	// 	break;
-	// 	case JUMP_COMPARE:
-	// 		jump_offset();
-	// 	case JUMP_COMPARE_IMMEDIATE_WORD:
-	// 		jump_compare_immediate_word();
-	// 	break;
-	// 	default:
-	// 	break;
-	// }
 	switch(instruction.category()){
 		case MOVE:
 			moveParameters.decode(instruction,code_fetched,registres,programm_counter);
@@ -132,12 +80,14 @@ void Processeur::decode(){
 		case SPECIAL:
 		break;
 		case JUMP:
+			jumpParameters.decode(instruction,code_fetched,programm_counter);
 		break;
 		case ALU_OPERATION:
 		break;
 		default:
 		break;
 	}
+	code_fetched.clear();
 	etat=EXECUTE;
 }
 
@@ -163,7 +113,6 @@ void Processeur::execute(Programme &prog){
 	switch(instruction.category()){
 		case SPECIAL:
 			std::cout<<"special instruction"<<std::endl;
-			code_fetched.clear();
 			programm_counter++;
 		break;
 		case MOVE:
@@ -176,6 +125,7 @@ void Processeur::execute(Programme &prog){
 		default:
 		break;
 	}
+	code_fetched.clear();
 	etat=FETCH;
 }
 
@@ -285,103 +235,6 @@ void Processeur::alu_operation_word(){
 
 
 
-void Processeur::jump_offset(){
-	uint32_t uoff=(code_fetched.front()&0x1fff)<<16;
-	code_fetched.pop_front();
-	uoff+=code_fetched.front();
-	if(uoff&0x10000000)
-		uoff|=0xf0000000;
-	int32_t off=uoff;
-	programm_counter+=off;
-	fetch_address=programm_counter;
-	std::cout<<"jump offset "<<std::hex<<off<<std::endl;
-	std::cout<<"PC "<<std::hex<<programm_counter<<std::endl;
-	code_fetched.clear();
-}
-
-void Processeur::jump_compare_offset(){
-	uint8_t op=(code_fetched.front()>>9)&0x03;
-	unsigned int Ra=(code_fetched.front()>>5)&0x0f;
-	unsigned int Rb=(code_fetched.front()>>1)&0x0f;
-	uint32_t uoff=0x0;
-	if(code_fetched.front()&0x01)
-		uoff=0xffff0000;
-	code_fetched.pop_front();
-	uoff+=code_fetched.front();
-	code_fetched.pop_front();
-	int32_t off=uoff;
-
-	std::cout<<"R"<<Ra<<":"<<std::hex<<registres.at(Ra)
-	<<" compared to R"<<Rb<<":"<<std::hex<<registres.at(Rb)<<std::endl;
-	std::cout<<"compare "<<(int)op<<std::endl;
-
-
-	if(jump_compare_operation(op,registres.at(Ra),registres.at(Rb))){
-		programm_counter+=off;
-		fetch_address=programm_counter;
-		std::cout<<"jump occured, offset "<<std::hex<<off<<"\nnew PC "<<std::hex<<programm_counter<<std::endl;
-		code_fetched.clear();
-	}
-	else{
-		programm_counter+=2;
-		std::cout<<"no jump occured"<<std::endl;
-	}
-}
-
-void Processeur::jump_compare(){
-	uint8_t op=(code_fetched.front()>>8)&0x03;
-	unsigned int Ra=(code_fetched.front()>>4)&0x0f;
-	unsigned int Rb=(code_fetched.front()&0x0f);
-	code_fetched.pop_front();
-	uint32_t address=code_fetched.front()<<16;
-	code_fetched.pop_front();
-	address+=code_fetched.front();
-	code_fetched.pop_front();
-
-	std::cout<<"R"<<Ra<<":"<<std::hex<<registres.at(Ra)
-	<<" compared to R"<<Rb<<":"<<std::hex<<registres.at(Rb)<<std::endl;
-	std::cout<<"compare "<<(int)op<<std::endl;
-
-
-	if(jump_compare_operation(op,registres.at(Ra),registres.at(Rb))){
-		programm_counter=address;
-		fetch_address=programm_counter;
-		std::cout<<"jump occured, address "<<std::hex<<address<<"\nnew PC "<<std::hex<<programm_counter<<std::endl;
-		code_fetched.clear();
-	}
-	else{
-		programm_counter+=3;
-		std::cout<<"no jump occured"<<std::endl;
-	}
-}
-
-void Processeur::jump_compare_immediate_word(){
-	uint8_t op=(code_fetched.front()>>7)&0x03;
-	unsigned int im=(code_fetched.front()&0x03f);
-	code_fetched.pop_front();
-	uint32_t address=code_fetched.front()<<16;
-	code_fetched.pop_front();
-	address+=code_fetched.front();
-	code_fetched.pop_front();
-	uint16_t word=code_fetched.front();
-	code_fetched.pop_front();
-
-	std::cout<<"immediate "<<im<<":"<<std::hex<<registres.at(im)
-	<<" compared to word "<<std::hex<<word<<std::endl;
-	std::cout<<"compare "<<(int)op<<std::endl;
-
-	if(jump_compare_operation(op,registres.at(im),word)){
-		programm_counter=address;
-		fetch_address=programm_counter;
-		std::cout<<"jump occured, address "<<std::hex<<address<<"\nnew PC "<<std::hex<<programm_counter<<std::endl;
-		code_fetched.clear();
-	}
-	else{
-		programm_counter+=4;
-		std::cout<<"no jump occured"<<std::endl;
-	}
-}
-
 bool Processeur::jump_compare_operation(uint8_t condition,uint16_t operandA,uint16_t operandB){
 	bool ret=false;
 	switch(condition){
@@ -411,16 +264,4 @@ bool Processeur::jump_compare_operation(uint8_t condition,uint16_t operandA,uint
 		break;
 	}
 	return ret;
-}
-
-
-void Processeur::jump_address(){
-	code_fetched.pop_front();
-	uint32_t address=code_fetched.front()<<16;
-	code_fetched.pop_front();
-	address+= code_fetched.front();
-	code_fetched.clear();
-	programm_counter=address;
-	fetch_address=programm_counter;
-	std::cout<<"unconditional jump to address "<<std::hex<<address<<std::endl;
 }
