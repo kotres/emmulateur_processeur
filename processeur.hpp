@@ -11,6 +11,7 @@
 #include "instruction.hpp"
 #include "moveInstructionDecoder.hpp"
 #include "jumpInstructionDecoder.hpp"
+#include "aluInstructionDecoder.hpp"
 
 class Instruction;
 
@@ -36,13 +37,13 @@ private:
 	EtatProcesseur etat;
 	MoveInstructionDecoder moveParameters;
 	JumpInstructionDecoder jumpParameters;
+	AluInstructionDecoder aluParameters;
 	void fetch(Programme& prog);
 	void decode();
 	void execute(Programme &prog);
 	void move(Programme& prog);
 	void jump();
 	void alu_operation();
-	void alu_operation_word();
 	void decodeOpcode();
 	bool jump_compare_operation(uint8_t condition,uint16_t operandA,uint16_t operandB);
 public:

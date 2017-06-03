@@ -7,7 +7,7 @@
 
 Processeur::Processeur()
 :alu(),registres(),programm_counter(0),fetch_address(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(0x0,0,ILLEGAL,1,SPECIAL),
-etat(FETCH),moveParameters(),jumpParameters()
+etat(FETCH),moveParameters(),jumpParameters(),aluParameters()
 {
 	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL,1,SPECIAL));
 	liste_instructions.push_back(Instruction(0x0,16,NOP,1,SPECIAL));
@@ -83,6 +83,7 @@ void Processeur::decode(){
 			jumpParameters.decode(instruction,code_fetched,programm_counter);
 		break;
 		case ALU_OPERATION:
+			aluParameters.decode(code_fetched);
 		break;
 		default:
 		break;
@@ -122,6 +123,7 @@ void Processeur::execute(Programme &prog){
 			jump();
 		break;
 		case ALU_OPERATION:
+			alu_operation();
 		break;
 		default:
 		break;
@@ -227,47 +229,28 @@ void Processeur::jump(){
 	code_fetched.clear();
 }
 
+
+
 void Processeur::alu_operation(){
-	std::cout<<"alu operation"<<std::endl;
-	unsigned int Rs,Rd;
-	Rs=(code_fetched.front()&0xf0)>>4;
-	Rd=(code_fetched.front()&0x0f);
-	alu.inputL()=registres.at(Rs);
-	std::cout<<"Rs: R"<<Rs<<":"<<std::hex<<registres.at(Rs)<<std::endl;
-	ALU_opcode op=(ALU_opcode)((code_fetched.front()&0x1f00)>>8);
-	alu.opcode()=op;
-	std::cout<<"opcode"<<((code_fetched.front()&0x1f00)>>8)<<std::endl;
-	alu.inputR()=registres.at(Rd);
-	std::cout<<"inputR: R"<<Rd<<":"<<std::hex<<registres.at(Rd)<<std::endl;
-	code_fetched.pop_front();
+	std::cout<<"alu operation executed"<<std::endl;
+	alu.inputL()=registres.at(aluParameters.Rs());
+	std::cout<<"Rs: R"<<aluParameters.Rs()<<":"<<std::hex<<registres.at(aluParameters.Rs())<<std::endl;
+	alu.opcode()=aluParameters.opcode();
+	std::cout<<"opcode"<<(int)aluParameters.opcode()<<std::endl;
+	if(aluParameters.isWord()){
+		alu.inputR()=aluParameters.word();
+		std::cout<<"inputR: word"<<std::hex<<aluParameters.word()<<std::endl;
+	}
+	else{
+		alu.inputR()=registres.at(aluParameters.Rd());
+		std::cout<<"inputR: R"<<aluParameters.Rd()<<":"<<std::hex<<registres.at(aluParameters.Rd())<<std::endl;
+	}
 	alu.update_state();
-	registres.at(Rd)=alu.resultat();
-	std::cout<<"result "<<std::hex<<alu.resultat()<<" stored in R"<<Rd<<std::endl;
-	++programm_counter;
+	registres.at(aluParameters.Rd())=alu.resultat();
+	std::cout<<"result "<<std::hex<<alu.resultat()<<" stored in R"<<aluParameters.Rd()<<std::endl;
+	programm_counter+=instruction.size();
+	code_fetched.clear();
 }
-
-void Processeur::alu_operation_word(){
-	std::cout<<"alu operation with word"<<std::endl;
-	unsigned int Rs,Rd;
-	Rs=(code_fetched.front()&0xf0)>>4;
-	Rd=(code_fetched.front()&0x0f);
-	alu.inputL()=registres.at(Rs);
-	std::cout<<"Rs: R"<<Rs<<":"<<std::hex<<registres.at(Rs)<<std::endl;
-	ALU_opcode op=(ALU_opcode)((code_fetched.front()&0x1f00)>>8);
-	alu.opcode()=op;
-	std::cout<<"opcode"<<((code_fetched.front()&0x1f00)>>8)<<std::endl;
-
-	code_fetched.pop_front();
-	alu.inputR()=code_fetched.front();
-	std::cout<<"inputR: word "<<std::hex<<code_fetched.front()<<std::endl;
-
-	code_fetched.pop_front();
-	alu.update_state();
-	registres.at(Rd)=alu.resultat();
-	std::cout<<"result "<<std::hex<<alu.resultat()<<" stored in R"<<Rd<<std::endl;
-	programm_counter+=2;
-}
-
 
 
 bool Processeur::jump_compare_operation(uint8_t condition,uint16_t operandA,uint16_t operandB){
