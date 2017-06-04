@@ -7,7 +7,7 @@
 
 Processeur::Processeur()
 :alu(),registres(),programm_counter(0),fetch_address(0),stack_pointer(0),code_fetched(),liste_instructions(),instruction(0x0,0,ILLEGAL,1,SPECIAL),
-etat(FETCH),moveParameters(),jumpParameters(),aluParameters()
+etat(FETCH),moveParameters(),jumpParameters(),aluParameters(),instruction_valid(false)
 {
 	liste_instructions.push_back(Instruction(0x0,0,ILLEGAL,1,SPECIAL));
 	liste_instructions.push_back(Instruction(0x0,16,NOP,1,SPECIAL));
@@ -52,43 +52,41 @@ void Processeur::fetch(Programme& prog){
 
 	}
 	else{
-		if (code_fetched.size()==0)
-		{
-			code_fetched.push_back(prog(fetch_address));
-			std::cout<<std::hex<<code_fetched.back()<<std::endl;
-			++fetch_address;
-			decodeOpcode();
-			if(instruction.size()==1)
-				etat=DECODE;
-		}
-		else{
-			code_fetched.push_back(prog(fetch_address));
-			fetch_address++;
-			if(instruction.size()<=code_fetched.size())
-				etat=DECODE;
-		}
+		code_fetched.push_back(prog(fetch_address));
+		std::cout<<std::hex<<code_fetched.back()<<std::endl;
+		++fetch_address;
+		etat=DECODE;
 	}
 }
 
 
 void Processeur::decode(){
 	std::cout<<"decode"<<std::endl;
-	switch(instruction.category()){
-		case MOVE:
-			moveParameters.decode(instruction,code_fetched,registres,programm_counter);
-		break;
-		case SPECIAL:
-		break;
-		case JUMP:
-			jumpParameters.decode(instruction,code_fetched,programm_counter);
-		break;
-		case ALU_OPERATION:
-			aluParameters.decode(code_fetched);
-		break;
-		default:
-		break;
+	if (code_fetched.size()==1)
+	{
+		decodeOpcode();
 	}
-	code_fetched.clear();
+	if(instruction.size()<=code_fetched.size()){
+		switch(instruction.category()){
+			case MOVE:
+				moveParameters.decode(instruction,code_fetched,registres,programm_counter);
+			break;
+			case SPECIAL:
+			break;
+			case JUMP:
+				jumpParameters.decode(instruction,code_fetched,programm_counter);
+			break;
+			case ALU_OPERATION:
+				aluParameters.decode(code_fetched);
+			break;
+			default:
+			break;
+		}
+		code_fetched.clear();
+		instruction_valid=true;
+	}
+	else
+		std::cout<<"not enough words to decode interuction"<<std::endl;
 	etat=EXECUTE;
 }
 
@@ -106,29 +104,34 @@ void Processeur::decodeOpcode(){
 	}
 	instruction=*it_final;
 	std::cout<<"code "<<code_fetched.front()<<std::endl;
-	std::cout<<"instruction "<<instruction.type()<<" trouvé"<<std::endl;
+	std::cout<<"instruction "<<instruction.type()<<" found"<<std::endl;
 }
 
 void Processeur::execute(Programme &prog){
 	std::cout<<"execute"<<std::endl;
-	switch(instruction.category()){
-		case SPECIAL:
-			std::cout<<"special instruction"<<std::endl;
-			programm_counter++;
-		break;
-		case MOVE:
-		 move(prog);
-		break;
-		case JUMP:
-			jump();
-		break;
-		case ALU_OPERATION:
-			alu_operation();
-		break;
-		default:
-		break;
+	if(instruction_valid){
+		switch(instruction.category()){
+			case SPECIAL:
+				std::cout<<"special instruction"<<std::endl;
+				programm_counter++;
+			break;
+			case MOVE:
+			 move(prog);
+			break;
+			case JUMP:
+				jump();
+			break;
+			case ALU_OPERATION:
+				alu_operation();
+			break;
+			default:
+			break;
+		}
+		code_fetched.clear();
+		instruction_valid=false;
 	}
-	code_fetched.clear();
+	else
+		std::cout<<"no valid instruction found"<<std::endl;
 	etat=FETCH;
 }
 

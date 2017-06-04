@@ -38,6 +38,7 @@ private:
 	MoveInstructionDecoder moveParameters;
 	JumpInstructionDecoder jumpParameters;
 	AluInstructionDecoder aluParameters;
+	bool instruction_valid;
 	void fetch(Programme& prog);
 	void decode();
 	void execute(Programme &prog);
